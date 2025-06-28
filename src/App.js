@@ -20,6 +20,15 @@ const JsonFormatter = () => {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  const trackEvent = (action, category = 'JSON Tool') => {
+    if (window.gtag) {
+      window.gtag('event', action, {
+        event_category: category,
+        event_label: 'User Action'
+      });
+    }
+  };
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('json-formatter-theme');
     if (savedTheme) {
@@ -65,6 +74,7 @@ const JsonFormatter = () => {
         const formatted = JSON.stringify(parsed, null, indentSize);
         setJsonInput(formatted);
         setHasUnsavedChanges(formatted !== lastSavedContent);
+        trackEvent('format_json');
       } catch (e) {
         setError(`Error formatting JSON: ${e.message}`);
       }
@@ -78,6 +88,7 @@ const JsonFormatter = () => {
         const minified = JSON.stringify(parsed);
         setJsonInput(minified);
         setHasUnsavedChanges(minified !== lastSavedContent);
+        trackEvent('minify_json');
       } catch (e) {
         setError(`Error minifying JSON: ${e.message}`);
       }
@@ -105,11 +116,13 @@ const JsonFormatter = () => {
       await navigator.clipboard.writeText(jsonInput);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      trackEvent('copy_json');
     } catch (e) {
       textareaRef.current?.select();
       document.execCommand('copy');
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      trackEvent('copy_json');
     }
   };
 
@@ -133,6 +146,7 @@ const JsonFormatter = () => {
       return;
     }
     fileInputRef.current?.click();
+    trackEvent('open_file');
   };
 
   const handleFileSelect = (event) => {
@@ -189,6 +203,7 @@ const JsonFormatter = () => {
     URL.revokeObjectURL(url);
     setLastSavedContent(jsonInput);
     setHasUnsavedChanges(false);
+    trackEvent('save_file');
   };
 
   const performSearch = (query) => {
@@ -497,900 +512,1023 @@ const JsonFormatter = () => {
 
   return (
     <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
       backgroundColor: darkMode ? '#111827' : '#f9fafb',
       color: darkMode ? '#f3f4f6' : '#111827',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      minHeight: '100vh'
     }}>
-      {/* Header */}
-      <header style={{
-        borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-        padding: '16px 24px'
+      {/* JSON Formatter Application */}
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                padding: '8px',
-                backgroundColor: '#3b82f6',
-                borderRadius: '8px',
-                color: 'white'
-              }}>
-                <FileText size={24} />
-              </div>
-              <div>
-                <h1 style={{
-                  fontSize: '20px',
-                  fontWeight: '600',
-                  margin: 0,
-                  color: darkMode ? '#f3f4f6' : '#111827'
-                }}>
-                  JSON Formatter Pro
-                </h1>
-                <p style={{
-                  fontSize: '14px',
-                  color: darkMode ? '#9ca3af' : '#6b7280',
-                  margin: 0
-                }}>
-                  Professional JSON editor and validator
-                </p>
-              </div>
-            </div>
-            
-            {currentFileName && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}>
-                <FileText size={16} style={{ color: darkMode ? '#9ca3af' : '#6b7280' }} />
-                <span>{currentFileName}</span>
-                {hasUnsavedChanges && (
-                  <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              onClick={toggleSearch}
-              style={{
-                padding: '10px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: showSearch ? '#3b82f6' : 'transparent',
-                color: showSearch ? 'white' : (darkMode ? '#9ca3af' : '#6b7280'),
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              title="Search"
-            >
-              <Search size={20} />
-            </button>
-            
-            <button
-              onClick={toggleTheme}
-              style={{
-                padding: '10px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                color: darkMode ? '#9ca3af' : '#6b7280',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              title="Toggle theme"
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                style={{
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: showSettings ? (darkMode ? '#374151' : '#f3f4f6') : 'transparent',
-                  color: darkMode ? '#9ca3af' : '#6b7280',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                title="Settings"
-              >
-                <Settings size={20} />
-              </button>
-              
-              {showSettings && (
-                <div style={{
-                  position: 'absolute',
-                  right: 0,
-                  marginTop: '8px',
-                  width: '256px',
-                  borderRadius: '8px',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                  border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-                  backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-                  zIndex: 50
-                }}>
-                  <div style={{ padding: '16px' }}>
-                    <h3 style={{ fontWeight: '500', marginBottom: '12px', margin: 0 }}>Settings</h3>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-                        Indentation
-                      </label>
-                      <select 
-                        value={indentSize} 
-                        onChange={(e) => setIndentSize(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
-                          backgroundColor: darkMode ? '#374151' : '#ffffff',
-                          color: darkMode ? '#ffffff' : '#111827',
-                          fontSize: '14px'
-                        }}
-                      >
-                        <option value={2}>2 spaces</option>
-                        <option value={4}>4 spaces</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Search Bar */}
-      {showSearch && (
-        <div style={{
+        {/* Header */}
+        <header style={{
           borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
           backgroundColor: darkMode ? '#1f2937' : '#ffffff',
           padding: '16px 24px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <Search 
-                size={16} 
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: darkMode ? '#6b7280' : '#9ca3af'
-                }} 
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search in JSON..."
-                style={{
-                  width: '100%',
-                  paddingLeft: '40px',
-                  paddingRight: '16px',
-                  paddingTop: '10px',
-                  paddingBottom: '10px',
-                  borderRadius: '8px',
-                  border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
-                  backgroundColor: darkMode ? '#374151' : '#ffffff',
-                  color: darkMode ? '#ffffff' : '#111827',
-                  fontSize: '14px',
-                  outline: 'none'
-                }}
-              />
-            </div>
-            
-            {searchResults.length > 0 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '14px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
-                  {currentSearchIndex + 1} of {searchResults.length}
-                </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    onClick={() => navigateSearch('prev')}
-                    style={{
-                      padding: '6px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      cursor: 'pointer',
-                      color: darkMode ? '#9ca3af' : '#6b7280'
-                    }}
-                  >
-                    <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
-                  </button>
-                  <button
-                    onClick={() => navigateSearch('next')}
-                    style={{
-                      padding: '6px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      cursor: 'pointer',
-                      color: darkMode ? '#9ca3af' : '#6b7280'
-                    }}
-                  >
-                    <ChevronRight size={16} />
-                  </button>
+                <div style={{
+                  padding: '8px',
+                  backgroundColor: '#3b82f6',
+                  borderRadius: '8px',
+                  color: 'white'
+                }}>
+                  <FileText size={24} />
+                </div>
+                <div>
+                  <h1 style={{
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    margin: 0,
+                    color: darkMode ? '#f3f4f6' : '#111827'
+                  }}>
+                    JSON Formatter Pro
+                  </h1>
+                  <p style={{
+                    fontSize: '14px',
+                    color: darkMode ? '#9ca3af' : '#6b7280',
+                    margin: 0
+                  }}>
+                    Professional JSON editor and validator
+                  </p>
                 </div>
               </div>
-            )}
-            
-            <button
-              onClick={clearSearch}
-              style={{
-                padding: '8px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                color: darkMode ? '#6b7280' : '#9ca3af'
-              }}
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sidebar */}
-        <div style={{
-          width: '280px',
-          borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-          backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* File Operations */}
-          <div style={{
-            padding: '20px',
-            borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
-          }}>
-            <h3 style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              marginBottom: '12px',
-              margin: '0 0 12px 0',
-              color: darkMode ? '#f3f4f6' : '#111827'
-            }}>
-              File
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button
-                onClick={openFile}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  color: darkMode ? '#d1d5db' : '#374151',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                }}
-              >
-                <FolderOpen size={16} />
-                <span>Open File</span>
-              </button>
               
-              <button
-                onClick={saveFile}
-                disabled={!jsonInput.trim()}
-                style={{
-                  width: '100%',
+              {currentFileName && (
+                <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '8px 12px',
+                  padding: '6px 12px',
                   borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  color: !jsonInput.trim() 
-                    ? '#9ca3af' 
-                    : hasUnsavedChanges
-                      ? '#f59e0b'
-                      : (darkMode ? '#d1d5db' : '#374151'),
+                  backgroundColor: darkMode ? '#374151' : '#f3f4f6',
                   fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  if (jsonInput.trim()) {
-                    e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                }}
-              >
-                {hasUnsavedChanges ? <Save size={16} /> : <Download size={16} />}
-                <span>{hasUnsavedChanges ? 'Save Changes' : 'Download'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* View Controls */}
-          <div style={{
-            padding: '20px',
-            borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
-          }}>
-            <h3 style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              marginBottom: '12px',
-              margin: '0 0 12px 0',
-              color: darkMode ? '#f3f4f6' : '#111827'
-            }}>
-              View
-            </h3>
-            <div style={{
-              display: 'flex',
-              borderRadius: '8px',
-              padding: '4px',
-              backgroundColor: darkMode ? '#374151' : '#f3f4f6'
-            }}>
-              <button
-                onClick={() => switchViewMode('editor')}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: viewMode === 'editor' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
-                  color: viewMode === 'editor' ? (darkMode ? '#f3f4f6' : '#111827') : (darkMode ? '#9ca3af' : '#6b7280'),
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <FileText size={16} />
-                <span>Editor</span>
-              </button>
-              <button
-                onClick={() => switchViewMode('tree')}
-                disabled={!jsonInput.trim() || !!error}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: viewMode === 'tree' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
-                  color: !jsonInput.trim() || !!error 
-                    ? '#9ca3af' 
-                    : viewMode === 'tree' 
-                      ? (darkMode ? '#f3f4f6' : '#111827') 
-                      : (darkMode ? '#9ca3af' : '#6b7280'),
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <TreePine size={16} />
-                <span>Tree</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div style={{
-            padding: '20px',
-            flex: 1
-          }}>
-            <h3 style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              marginBottom: '12px',
-              margin: '0 0 12px 0',
-              color: darkMode ? '#f3f4f6' : '#111827'
-            }}>
-              Actions
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {viewMode === 'editor' ? (
-                <>
-                  <button
-                    onClick={formatJson}
-                    disabled={!jsonInput.trim()}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      color: !jsonInput.trim() ? '#9ca3af' : '#3b82f6',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (jsonInput.trim()) {
-                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <FileText size={16} />
-                    <span>Format JSON</span>
-                  </button>
-                  
-                  <button
-                    onClick={minifyJson}
-                    disabled={!jsonInput.trim()}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      color: !jsonInput.trim() ? '#9ca3af' : '#10b981',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (jsonInput.trim()) {
-                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <Minimize2 size={16} />
-                    <span>Minify JSON</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={expandAll}
-                    disabled={!jsonInput.trim() || !!error}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      color: !jsonInput.trim() || !!error ? '#9ca3af' : '#10b981',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (jsonInput.trim() && !error) {
-                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <ChevronDown size={16} />
-                    <span>Expand All</span>
-                  </button>
-                  
-                  <button
-                    onClick={collapseAll}
-                    disabled={!jsonInput.trim() || !!error}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      color: !jsonInput.trim() || !!error ? '#9ca3af' : '#f59e0b',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (jsonInput.trim() && !error) {
-                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <ChevronRight size={16} />
-                    <span>Collapse All</span>
-                  </button>
-                </>
+                  fontWeight: '500'
+                }}>
+                  <FileText size={16} style={{ color: darkMode ? '#9ca3af' : '#6b7280' }} />
+                  <span>{currentFileName}</span>
+                  {hasUnsavedChanges && (
+                    <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></div>
+                  )}
+                </div>
               )}
-              
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
-                onClick={copyToClipboard}
-                disabled={!jsonInput.trim()}
+                onClick={toggleSearch}
                 style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
+                  padding: '10px',
+                  borderRadius: '8px',
                   border: 'none',
-                  backgroundColor: 'transparent',
-                  color: !jsonInput.trim() 
-                    ? '#9ca3af' 
-                    : copied 
-                      ? '#10b981' 
-                      : '#8b5cf6',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
+                  backgroundColor: showSearch ? '#3b82f6' : 'transparent',
+                  color: showSearch ? 'white' : (darkMode ? '#9ca3af' : '#6b7280'),
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
                 }}
-                onMouseEnter={(e) => {
-                  if (jsonInput.trim()) {
-                    e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                }}
+                title="Search"
               >
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-                <span>{copied ? 'Copied!' : 'Copy'}</span>
+                <Search size={20} />
               </button>
               
               <button
-                onClick={clearInput}
+                onClick={toggleTheme}
                 style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
+                  padding: '10px',
+                  borderRadius: '8px',
                   border: 'none',
                   backgroundColor: 'transparent',
                   color: darkMode ? '#9ca3af' : '#6b7280',
-                  fontSize: '14px',
-                  fontWeight: '500',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
+                  transition: 'all 0.2s'
                 }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                }}
+                title="Toggle theme"
               >
-                <RotateCcw size={16} />
-                <span>Clear</span>
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              
-              <button
-                onClick={loadSample}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  color: darkMode ? '#9ca3af' : '#6b7280',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Upload size={16} />
-                <span>Load Sample</span>
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* Main Editor Area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Status Bars */}
-          {error && (
-            <div style={{
-              padding: '12px 24px',
-              backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
-              borderBottom: `1px solid ${darkMode ? '#dc2626' : '#fecaca'}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <div style={{ width: '8px', height: '8px', backgroundColor: '#dc2626', borderRadius: '50%' }}></div>
-              <p style={{ fontSize: '14px', fontWeight: '500', color: darkMode ? '#fca5a5' : '#dc2626', margin: 0 }}>
-                {error}
-              </p>
-            </div>
-          )}
-
-          {hasUnsavedChanges && (
-            <div style={{
-              padding: '12px 24px',
-              backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb',
-              borderBottom: `1px solid ${darkMode ? '#f59e0b' : '#fed7aa'}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></div>
-              <p style={{ fontSize: '14px', fontWeight: '500', color: darkMode ? '#fbbf24' : '#f59e0b', margin: 0 }}>
-                You have unsaved changes
-              </p>
-            </div>
-          )}
-
-          {/* Content Area */}
-          <div style={{ flex: 1, padding: '24px', overflow: 'hidden' }}>
-            {viewMode === 'editor' ? (
-              <div style={{
-                height: '100%',
-                borderRadius: '8px',
-                border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  padding: '12px 16px',
-                  borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-                  backgroundColor: darkMode ? '#374151' : '#f9fafb',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
-                  <span>JSON Editor</span>
-                  {jsonInput.trim() && (
-                    <span style={{
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontWeight: '500',
-                      backgroundColor: error 
-                        ? (darkMode ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2')
-                        : (darkMode ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7'),
-                      color: error 
-                        ? (darkMode ? '#f87171' : '#dc2626')
-                        : (darkMode ? '#4ade80' : '#166534')
-                    }}>
-                      {error ? 'Invalid' : 'Valid JSON'}
-                    </span>
-                  )}
-                </div>
-                <div style={{ flex: 1, padding: '16px', overflow: 'hidden' }}>
-                  <textarea
-                    ref={textareaRef}
-                    value={jsonInput}
-                    onChange={handleInputChange}
-                    placeholder="Paste or type your JSON here..."
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      border: 'none',
-                      outline: 'none',
-                      resize: 'none',
-                      fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-                      fontSize: '14px',
-                      lineHeight: '1.6',
-                      backgroundColor: 'transparent',
-                      color: darkMode ? '#f3f4f6' : '#111827'
-                    }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div style={{
-                height: '100%',
-                borderRadius: '8px',
-                border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  padding: '12px 16px',
-                  borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-                  backgroundColor: darkMode ? '#374151' : '#f9fafb',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
-                  <span>JSON Tree View</span>
-                  <span style={{ fontSize: '12px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
-                    Click nodes to expand/collapse
-                  </span>
-                </div>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: showSettings ? (darkMode ? '#374151' : '#f3f4f6') : 'transparent',
+                    color: darkMode ? '#9ca3af' : '#6b7280',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  title="Settings"
+                >
+                  <Settings size={20} />
+                </button>
                 
-                <div style={{
-                  flex: 1,
-                  padding: '16px',
-                  overflow: 'auto',
-                  backgroundColor: darkMode ? '#374151' : '#ffffff',
-                  fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-                  fontSize: '14px'
-                }}>
-                  {jsonInput.trim() && !error ? (
-                    <div>
-                      {(() => {
-                        try {
-                          const parsed = JSON.parse(jsonInput);
-                          if (Array.isArray(parsed)) {
-                            return parsed.map((item, index) => 
-                              renderTreeNode(item, `[${index}]`, '', 0)
-                            );
-                          } else if (typeof parsed === 'object' && parsed !== null) {
-                            return Object.entries(parsed).map(([key, value]) => 
-                              renderTreeNode(value, key, '', 0)
-                            );
-                          } else {
-                            return (
-                              <div style={{ padding: '32px', textAlign: 'center' }}>
-                                <span style={{
-                                  fontSize: '18px',
-                                  color: darkMode ? '#d1d5db' : '#374151'
-                                }}>
-                                  {typeof parsed === 'string' ? `"${parsed}"` : String(parsed)}
-                                </span>
-                                <div style={{
-                                  fontSize: '14px',
-                                  marginTop: '8px',
-                                  color: darkMode ? '#6b7280' : '#6b7280'
-                                }}>
-                                  Primitive value - no tree structure
-                                </div>
-                              </div>
-                            );
-                          }
-                        } catch (e) {
-                          return null;
-                        }
-                      })()}
+                {showSettings && (
+                  <div style={{
+                    position: 'absolute',
+                    right: 0,
+                    marginTop: '8px',
+                    width: '256px',
+                    borderRadius: '8px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                    backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                    zIndex: 50
+                  }}>
+                    <div style={{ padding: '16px' }}>
+                      <h3 style={{ fontWeight: '500', marginBottom: '12px', margin: 0 }}>Settings</h3>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+                          Indentation
+                        </label>
+                        <select 
+                          value={indentSize} 
+                          onChange={(e) => setIndentSize(Number(e.target.value))}
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            borderRadius: '6px',
+                            border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                            backgroundColor: darkMode ? '#374151' : '#ffffff',
+                            color: darkMode ? '#ffffff' : '#111827',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value={2}>2 spaces</option>
+                          <option value={4}>4 spaces</option>
+                        </select>
+                      </div>
                     </div>
-                  ) : (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      textAlign: 'center',
-                      flexDirection: 'column'
-                    }}>
-                      <TreePine size={64} style={{
-                        marginBottom: '16px',
-                        color: darkMode ? '#4b5563' : '#9ca3af'
-                      }} />
-                      <p style={{
-                        fontSize: '18px',
-                        fontWeight: '500',
-                        marginBottom: '8px',
-                        margin: '0 0 8px 0',
-                        color: darkMode ? '#9ca3af' : '#6b7280'
-                      }}>
-                        {error ? 'Fix JSON errors to view tree' : 'Enter valid JSON to view tree structure'}
-                      </p>
-                      <p style={{
-                        fontSize: '14px',
-                        margin: 0,
-                        color: darkMode ? '#6b7280' : '#6b7280'
-                      }}>
-                        Switch to Editor mode to input JSON
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer Stats */}
-          {jsonInput.trim() && !error && (
-            <div style={{
-              padding: '12px 24px',
-              borderTop: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-              backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
-              fontSize: '14px',
-              color: darkMode ? '#9ca3af' : '#6b7280'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <span>Characters: {jsonInput.length.toLocaleString()}</span>
-                <span>Lines: {jsonInput.split('\n').length.toLocaleString()}</span>
-                <span>Size: {(new Blob([jsonInput]).size / 1024).toFixed(1)} KB</span>
-                {searchResults.length > 0 && (
-                  <span>Search Results: {searchResults.length}</span>
+                  </div>
                 )}
               </div>
             </div>
-          )}
+          </div>
+        </header>
+
+        {/* Search Bar */}
+        {showSearch && (
+          <div style={{
+            borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+            backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+            padding: '16px 24px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <Search 
+                  size={16} 
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: darkMode ? '#6b7280' : '#9ca3af'
+                  }} 
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search in JSON..."
+                  style={{
+                    width: '100%',
+                    paddingLeft: '40px',
+                    paddingRight: '16px',
+                    paddingTop: '10px',
+                    paddingBottom: '10px',
+                    borderRadius: '8px',
+                    border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                    backgroundColor: darkMode ? '#374151' : '#ffffff',
+                    color: darkMode ? '#ffffff' : '#111827',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              
+              {searchResults.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '14px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+                    {currentSearchIndex + 1} of {searchResults.length}
+                  </span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      onClick={() => navigateSearch('prev')}
+                      style={{
+                        padding: '6px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        cursor: 'pointer',
+                        color: darkMode ? '#9ca3af' : '#6b7280'
+                      }}
+                    >
+                      <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
+                    </button>
+                    <button
+                      onClick={() => navigateSearch('next')}
+                      style={{
+                        padding: '6px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        cursor: 'pointer',
+                        color: darkMode ? '#9ca3af' : '#6b7280'
+                      }}
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <button
+                onClick={clearSearch}
+                style={{
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                  color: darkMode ? '#6b7280' : '#9ca3af'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          {/* Sidebar */}
+          <div style={{
+            width: '280px',
+            borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+            backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* File Operations */}
+            <div style={{
+              padding: '20px',
+              borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+            }}>
+              <h3 style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                margin: '0 0 12px 0',
+                color: darkMode ? '#f3f4f6' : '#111827'
+              }}>
+                File
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  onClick={openFile}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: darkMode ? '#d1d5db' : '#374151',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <FolderOpen size={16} />
+                  <span>Open File</span>
+                </button>
+                
+                <button
+                  onClick={saveFile}
+                  disabled={!jsonInput.trim()}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: !jsonInput.trim() 
+                      ? '#9ca3af' 
+                      : hasUnsavedChanges
+                        ? '#f59e0b'
+                        : (darkMode ? '#d1d5db' : '#374151'),
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (jsonInput.trim()) {
+                      e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  {hasUnsavedChanges ? <Save size={16} /> : <Download size={16} />}
+                  <span>{hasUnsavedChanges ? 'Save Changes' : 'Download'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* View Controls */}
+            <div style={{
+              padding: '20px',
+              borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+            }}>
+              <h3 style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                margin: '0 0 12px 0',
+                color: darkMode ? '#f3f4f6' : '#111827'
+              }}>
+                View
+              </h3>
+              <div style={{
+                display: 'flex',
+                borderRadius: '8px',
+                padding: '4px',
+                backgroundColor: darkMode ? '#374151' : '#f3f4f6'
+              }}>
+                <button
+                  onClick={() => switchViewMode('editor')}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'editor' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
+                    color: viewMode === 'editor' ? (darkMode ? '#f3f4f6' : '#111827') : (darkMode ? '#9ca3af' : '#6b7280'),
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <FileText size={16} />
+                  <span>Editor</span>
+                </button>
+                <button
+                  onClick={() => switchViewMode('tree')}
+                  disabled={!jsonInput.trim() || !!error}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'tree' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
+                    color: !jsonInput.trim() || !!error 
+                      ? '#9ca3af' 
+                      : viewMode === 'tree' 
+                        ? (darkMode ? '#f3f4f6' : '#111827') 
+                        : (darkMode ? '#9ca3af' : '#6b7280'),
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <TreePine size={16} />
+                  <span>Tree</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{
+              padding: '20px',
+              flex: 1
+            }}>
+              <h3 style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                margin: '0 0 12px 0',
+                color: darkMode ? '#f3f4f6' : '#111827'
+              }}>
+                Actions
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {viewMode === 'editor' ? (
+                  <>
+                    <button
+                      onClick={formatJson}
+                      disabled={!jsonInput.trim()}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: !jsonInput.trim() ? '#9ca3af' : '#3b82f6',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (jsonInput.trim()) {
+                          e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <FileText size={16} />
+                      <span>Format JSON</span>
+                    </button>
+                    
+                    <button
+                      onClick={minifyJson}
+                      disabled={!jsonInput.trim()}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: !jsonInput.trim() ? '#9ca3af' : '#10b981',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (jsonInput.trim()) {
+                          e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <Minimize2 size={16} />
+                      <span>Minify JSON</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={expandAll}
+                      disabled={!jsonInput.trim() || !!error}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: !jsonInput.trim() || !!error ? '#9ca3af' : '#10b981',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (jsonInput.trim() && !error) {
+                          e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <ChevronDown size={16} />
+                      <span>Expand All</span>
+                    </button>
+                    
+                    <button
+                      onClick={collapseAll}
+                      disabled={!jsonInput.trim() || !!error}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: !jsonInput.trim() || !!error ? '#9ca3af' : '#f59e0b',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (jsonInput.trim() && !error) {
+                          e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <ChevronRight size={16} />
+                      <span>Collapse All</span>
+                    </button>
+                  </>
+                )}
+                
+                <button
+                  onClick={copyToClipboard}
+                  disabled={!jsonInput.trim()}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: !jsonInput.trim() 
+                      ? '#9ca3af' 
+                      : copied 
+                        ? '#10b981' 
+                        : '#8b5cf6',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (jsonInput.trim()) {
+                      e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                  <span>{copied ? 'Copied!' : 'Copy'}</span>
+                </button>
+                
+                <button
+                  onClick={clearInput}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: darkMode ? '#9ca3af' : '#6b7280',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <RotateCcw size={16} />
+                  <span>Clear</span>
+                </button>
+                
+                <button
+                  onClick={loadSample}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: darkMode ? '#9ca3af' : '#6b7280',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <Upload size={16} />
+                  <span>Load Sample</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Editor Area */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Status Bars */}
+            {error && (
+              <div style={{
+                padding: '12px 24px',
+                backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
+                borderBottom: `1px solid ${darkMode ? '#dc2626' : '#fecaca'}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <div style={{ width: '8px', height: '8px', backgroundColor: '#dc2626', borderRadius: '50%' }}></div>
+                <p style={{ fontSize: '14px', fontWeight: '500', color: darkMode ? '#fca5a5' : '#dc2626', margin: 0 }}>
+                  {error}
+                </p>
+              </div>
+            )}
+
+            {hasUnsavedChanges && (
+              <div style={{
+                padding: '12px 24px',
+                backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb',
+                borderBottom: `1px solid ${darkMode ? '#f59e0b' : '#fed7aa'}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></div>
+                <p style={{ fontSize: '14px', fontWeight: '500', color: darkMode ? '#fbbf24' : '#f59e0b', margin: 0 }}>
+                  You have unsaved changes
+                </p>
+              </div>
+            )}
+
+            {/* Content Area */}
+            <div style={{ flex: 1, padding: '24px', overflow: 'hidden' }}>
+              {viewMode === 'editor' ? (
+                <div style={{
+                  height: '100%',
+                  borderRadius: '8px',
+                  border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    padding: '12px 16px',
+                    borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                    backgroundColor: darkMode ? '#374151' : '#f9fafb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}>
+                    <span>JSON Editor</span>
+                    {jsonInput.trim() && (
+                      <span style={{
+                        fontSize: '12px',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontWeight: '500',
+                        backgroundColor: error 
+                          ? (darkMode ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2')
+                          : (darkMode ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7'),
+                        color: error 
+                          ? (darkMode ? '#f87171' : '#dc2626')
+                          : (darkMode ? '#4ade80' : '#166534')
+                      }}>
+                        {error ? 'Invalid' : 'Valid JSON'}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, padding: '16px', overflow: 'hidden' }}>
+                    <textarea
+                      ref={textareaRef}
+                      value={jsonInput}
+                      onChange={handleInputChange}
+                      placeholder="Paste or type your JSON here..."
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        outline: 'none',
+                        resize: 'none',
+                        fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                        backgroundColor: 'transparent',
+                        color: darkMode ? '#f3f4f6' : '#111827'
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  height: '100%',
+                  borderRadius: '8px',
+                  border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    padding: '12px 16px',
+                    borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                    backgroundColor: darkMode ? '#374151' : '#f9fafb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}>
+                    <span>JSON Tree View</span>
+                    <span style={{ fontSize: '12px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+                      Click nodes to expand/collapse
+                    </span>
+                  </div>
+                  
+                  <div style={{
+                    flex: 1,
+                    padding: '16px',
+                    overflow: 'auto',
+                    backgroundColor: darkMode ? '#374151' : '#ffffff',
+                    fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+                    fontSize: '14px'
+                  }}>
+                    {jsonInput.trim() && !error ? (
+                      <div>
+                        {(() => {
+                          try {
+                            const parsed = JSON.parse(jsonInput);
+                            if (Array.isArray(parsed)) {
+                              return parsed.map((item, index) => 
+                                renderTreeNode(item, `[${index}]`, '', 0)
+                              );
+                            } else if (typeof parsed === 'object' && parsed !== null) {
+                              return Object.entries(parsed).map(([key, value]) => 
+                                renderTreeNode(value, key, '', 0)
+                              );
+                            } else {
+                              return (
+                                <div style={{ padding: '32px', textAlign: 'center' }}>
+                                  <span style={{
+                                    fontSize: '18px',
+                                    color: darkMode ? '#d1d5db' : '#374151'
+                                  }}>
+                                    {typeof parsed === 'string' ? `"${parsed}"` : String(parsed)}
+                                  </span>
+                                  <div style={{
+                                    fontSize: '14px',
+                                    marginTop: '8px',
+                                    color: darkMode ? '#6b7280' : '#6b7280'
+                                  }}>
+                                    Primitive value - no tree structure
+                                  </div>
+                                </div>
+                              );
+                            }
+                          } catch (e) {
+                            return null;
+                          }
+                        })()}
+                      </div>
+                    ) : (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        textAlign: 'center',
+                        flexDirection: 'column'
+                      }}>
+                        <TreePine size={64} style={{
+                          marginBottom: '16px',
+                          color: darkMode ? '#4b5563' : '#9ca3af'
+                        }} />
+                        <p style={{
+                          fontSize: '18px',
+                          fontWeight: '500',
+                          marginBottom: '8px',
+                          margin: '0 0 8px 0',
+                          color: darkMode ? '#9ca3af' : '#6b7280'
+                        }}>
+                          {error ? 'Fix JSON errors to view tree' : 'Enter valid JSON to view tree structure'}
+                        </p>
+                        <p style={{
+                          fontSize: '14px',
+                          margin: 0,
+                          color: darkMode ? '#6b7280' : '#6b7280'
+                        }}>
+                          Switch to Editor mode to input JSON
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Stats */}
+            {jsonInput.trim() && !error && (
+              <div style={{
+                padding: '12px 24px',
+                borderTop: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
+                fontSize: '14px',
+                color: darkMode ? '#9ca3af' : '#6b7280'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                  <span>Characters: {jsonInput.length.toLocaleString()}</span>
+                  <span>Lines: {jsonInput.split('\n').length.toLocaleString()}</span>
+                  <span>Size: {(new Blob([jsonInput]).size / 1024).toFixed(1)} KB</span>
+                  {searchResults.length > 0 && (
+                    <span>Search Results: {searchResults.length}</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json,text/plain"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
       </div>
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json,application/json,text/plain"
-        onChange={handleFileSelect}
-        style={{ display: 'none' }}
-      />
+      {/* SEO Content Section */}
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '40px 20px',
+        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+        color: darkMode ? '#f3f4f6' : '#111827'
+      }}>
+        <section style={{ marginBottom: '40px', textAlign: 'center' }}>
+          <h1 style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            marginBottom: '16px',
+            color: darkMode ? '#f3f4f6' : '#111827'
+          }}>
+            Professional JSON Formatter & Validator
+          </h1>
+          <p style={{
+            fontSize: '18px',
+            lineHeight: '1.6',
+            maxWidth: '800px',
+            margin: '0 auto 24px',
+            color: darkMode ? '#d1d5db' : '#374151'
+          }}>
+            Format, validate, and edit JSON data with our free online JSON formatter. 
+            Features include syntax validation, tree view, minification, and file operations.
+          </p>
+        </section>
+
+        <section style={{ marginBottom: '40px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '24px'
+          }}>
+            <div>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                color: darkMode ? '#f3f4f6' : '#111827'
+              }}>
+                🎨 JSON Formatting
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                lineHeight: '1.6',
+                color: darkMode ? '#d1d5db' : '#374151'
+              }}>
+                Instantly format and beautify your JSON data with proper indentation.
+              </p>
+            </div>
+            
+            <div>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                color: darkMode ? '#f3f4f6' : '#111827'
+              }}>
+                ✅ Real-time Validation
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                lineHeight: '1.6',
+                color: darkMode ? '#d1d5db' : '#374151'
+              }}>
+                Validate JSON syntax in real-time with detailed error reporting.
+              </p>
+            </div>
+            
+            <div>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                color: darkMode ? '#f3f4f6' : '#111827'
+              }}>
+                🌳 Tree View
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                lineHeight: '1.6',
+                color: darkMode ? '#d1d5db' : '#374151'
+              }}>
+                Visualize JSON structure with an interactive tree view.
+              </p>
+            </div>
+          </div>
+        </section>
+        
+        <section style={{ marginBottom: '40px' }}>
+          <h2 style={{
+            fontSize: '28px',
+            fontWeight: '600',
+            marginBottom: '16px',
+            color: darkMode ? '#f3f4f6' : '#111827'
+          }}>
+            Why Choose GuidedJSON?
+          </h2>
+          <ul style={{
+            listStyle: 'disc',
+            paddingLeft: '20px',
+            lineHeight: '1.8',
+            color: darkMode ? '#d1d5db' : '#374151'
+          }}>
+            <li>100% free JSON formatting and validation tools</li>
+            <li>No registration or sign-up required</li>
+            <li>Works offline - no data sent to servers</li>
+            <li>Professional features for developers</li>
+            <li>Dark and light theme support</li>
+            <li>Mobile-friendly responsive design</li>
+            <li>File import and export capabilities</li>
+            <li>Advanced search functionality</li>
+          </ul>
+        </section>
+      </div>
     </div>
   );
 };
