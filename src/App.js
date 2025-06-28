@@ -20,7 +20,6 @@ const JsonFormatter = () => {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Initialize theme
   useEffect(() => {
     const savedTheme = localStorage.getItem('json-formatter-theme');
     if (savedTheme) {
@@ -31,7 +30,6 @@ const JsonFormatter = () => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('json-formatter-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
@@ -385,66 +383,71 @@ const JsonFormatter = () => {
     const isObject = typeof data === 'object' && data !== null;
     const isArray = Array.isArray(data);
     
-    const getValueType = (value) => {
-      if (value === null) return 'null';
-      if (typeof value === 'string') return 'string';
-      if (typeof value === 'number') return 'number';
-      if (typeof value === 'boolean') return 'boolean';
-      if (Array.isArray(value)) return 'array';
-      if (typeof value === 'object') return 'object';
-      return 'unknown';
-    };
-
-    const getValueColor = (type) => {
-      const colors = {
-        string: darkMode ? 'text-emerald-400' : 'text-emerald-600',
-        number: darkMode ? 'text-blue-400' : 'text-blue-600',
-        boolean: darkMode ? 'text-purple-400' : 'text-purple-600',
-        null: darkMode ? 'text-gray-500' : 'text-gray-400',
-        object: darkMode ? 'text-yellow-400' : 'text-yellow-600',
-        array: darkMode ? 'text-orange-400' : 'text-orange-600'
-      };
-      return colors[type] || (darkMode ? 'text-gray-300' : 'text-gray-700');
+    const getValueColor = (value) => {
+      if (value === null) return darkMode ? '#6b7280' : '#9ca3af';
+      if (typeof value === 'string') return darkMode ? '#34d399' : '#059669';
+      if (typeof value === 'number') return darkMode ? '#60a5fa' : '#2563eb';
+      if (typeof value === 'boolean') return darkMode ? '#a78bfa' : '#7c3aed';
+      if (Array.isArray(value)) return darkMode ? '#fb923c' : '#ea580c';
+      if (typeof value === 'object') return darkMode ? '#fbbf24' : '#d97706';
+      return darkMode ? '#d1d5db' : '#374151';
     };
 
     const renderValue = (value) => {
-      const type = getValueType(value);
-      const colorClass = getValueColor(type);
+      const color = getValueColor(value);
       
-      if (type === 'string') {
-        return <span className={colorClass}>"{value}"</span>;
-      } else if (type === 'null') {
-        return <span className={colorClass}>null</span>;
+      if (typeof value === 'string') {
+        return <span style={{ color }}>{`"${value}"`}</span>;
+      } else if (value === null) {
+        return <span style={{ color }}>null</span>;
       } else {
-        return <span className={colorClass}>{String(value)}</span>;
+        return <span style={{ color }}>{String(value)}</span>;
       }
     };
 
     return (
-      <div key={nodeKey} className="select-text">
+      <div key={nodeKey} style={{ userSelect: 'text' }}>
         <div 
-          className={`flex items-center py-1.5 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${
-            darkMode ? 'text-gray-300' : 'text-gray-700'
-          }`}
-          style={{ paddingLeft: `${level * 24 + 12}px` }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            paddingLeft: `${level * 24 + 12}px`,
+            color: darkMode ? '#d1d5db' : '#374151'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = darkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(248, 250, 252, 0.8)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           {isObject ? (
             <>
               <button
                 onClick={() => toggleNode(nodeKey)}
-                className={`mr-2 p-0.5 rounded transition-colors ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'
-                }`}
+                style={{
+                  marginRight: '8px',
+                  padding: '2px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                  color: 'inherit'
+                }}
               >
                 {isExpanded ? 
-                  <ChevronDown className="h-4 w-4" /> : 
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronDown size={16} /> : 
+                  <ChevronRight size={16} />
                 }
               </button>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
+              <span style={{ fontWeight: '500', color: darkMode ? '#f1f5f9' : '#1e293b' }}>
                 {key}:
               </span>
-              <span className={`ml-2 text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+              <span style={{ marginLeft: '8px', fontSize: '14px', color: darkMode ? '#6b7280' : '#6b7280' }}>
                 {isArray ? 
                   `Array(${data.length})` : 
                   `Object(${Object.keys(data).length})`
@@ -453,11 +456,11 @@ const JsonFormatter = () => {
             </>
           ) : (
             <>
-              <div className="w-5 mr-2"></div>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
+              <div style={{ width: '20px', marginRight: '8px' }}></div>
+              <span style={{ fontWeight: '500', color: darkMode ? '#f1f5f9' : '#1e293b' }}>
                 {key}:
               </span>
-              <span className="ml-2">
+              <span style={{ marginLeft: '8px' }}>
                 {renderValue(data)}
               </span>
             </>
@@ -493,118 +496,162 @@ const JsonFormatter = () => {
   }, [hasUnsavedChanges]);
 
   return (
-    <div className={`h-screen flex flex-col ${
-      darkMode 
-        ? 'bg-gray-950 text-gray-100' 
-        : 'bg-gray-50 text-gray-900'
-    }`}>
+    <div style={{
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: darkMode ? '#111827' : '#f9fafb',
+      color: darkMode ? '#f3f4f6' : '#111827',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
       {/* Header */}
-      <header className={`border-b ${
-        darkMode ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-      }`}>
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-500 rounded-lg">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    JSON Formatter Pro
-                  </h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Professional JSON editor and validator
-                  </p>
-                </div>
+      <header style={{
+        borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+        padding: '16px 24px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                padding: '8px',
+                backgroundColor: '#3b82f6',
+                borderRadius: '8px',
+                color: 'white'
+              }}>
+                <FileText size={24} />
               </div>
-              
-              {currentFileName && (
-                <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-md ${
-                  darkMode ? 'bg-gray-800' : 'bg-gray-100'
-                }`}>
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {currentFileName}
-                  </span>
-                  {hasUnsavedChanges && (
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  )}
-                </div>
-              )}
+              <div>
+                <h1 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  margin: 0,
+                  color: darkMode ? '#f3f4f6' : '#111827'
+                }}>
+                  JSON Formatter Pro
+                </h1>
+                <p style={{
+                  fontSize: '14px',
+                  color: darkMode ? '#9ca3af' : '#6b7280',
+                  margin: 0
+                }}>
+                  Professional JSON editor and validator
+                </p>
+              </div>
             </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={toggleSearch}
-                className={`p-2.5 rounded-lg transition-colors ${
-                  showSearch
-                    ? 'bg-blue-500 text-white'
-                    : darkMode 
-                      ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                title="Search"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-              
-              <button
-                onClick={toggleTheme}
-                className={`p-2.5 rounded-lg transition-colors ${
-                  darkMode 
-                    ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                title="Toggle theme"
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-
-              <div className="relative">
-                <button
-                  onClick={() => setShowSettings(!showSettings)}
-                  className={`p-2.5 rounded-lg transition-colors ${
-                    showSettings
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : darkMode 
-                        ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800' 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                  title="Settings"
-                >
-                  <Settings className="h-5 w-5" />
-                </button>
-                
-                {showSettings && (
-                  <div className={`absolute right-0 mt-2 w-64 rounded-lg shadow-lg border z-50 ${
-                    darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
-                  }`}>
-                    <div className="p-4">
-                      <h3 className="font-medium mb-3">Settings</h3>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Indentation
-                          </label>
-                          <select 
-                            value={indentSize} 
-                            onChange={(e) => setIndentSize(Number(e.target.value))}
-                            className={`w-full px-3 py-2 rounded-md border text-sm ${
-                              darkMode 
-                                ? 'bg-gray-800 border-gray-600 text-white' 
-                                : 'bg-white border-gray-300 text-gray-900'
-                            }`}
-                          >
-                            <option value={2}>2 spaces</option>
-                            <option value={4}>4 spaces</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+            
+            {currentFileName && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                <FileText size={16} style={{ color: darkMode ? '#9ca3af' : '#6b7280' }} />
+                <span>{currentFileName}</span>
+                {hasUnsavedChanges && (
+                  <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></div>
                 )}
               </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={toggleSearch}
+              style={{
+                padding: '10px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: showSearch ? '#3b82f6' : 'transparent',
+                color: showSearch ? 'white' : (darkMode ? '#9ca3af' : '#6b7280'),
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              title="Search"
+            >
+              <Search size={20} />
+            </button>
+            
+            <button
+              onClick={toggleTheme}
+              style={{
+                padding: '10px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: darkMode ? '#9ca3af' : '#6b7280',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              title="Toggle theme"
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                style={{
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: showSettings ? (darkMode ? '#374151' : '#f3f4f6') : 'transparent',
+                  color: darkMode ? '#9ca3af' : '#6b7280',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                title="Settings"
+              >
+                <Settings size={20} />
+              </button>
+              
+              {showSettings && (
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  marginTop: '8px',
+                  width: '256px',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                  backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                  zIndex: 50
+                }}>
+                  <div style={{ padding: '16px' }}>
+                    <h3 style={{ fontWeight: '500', marginBottom: '12px', margin: 0 }}>Settings</h3>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+                        Indentation
+                      </label>
+                      <select 
+                        value={indentSize} 
+                        onChange={(e) => setIndentSize(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                          backgroundColor: darkMode ? '#374151' : '#ffffff',
+                          color: darkMode ? '#ffffff' : '#111827',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value={2}>2 spaces</option>
+                        <option value={4}>4 spaces</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -612,177 +659,339 @@ const JsonFormatter = () => {
 
       {/* Search Bar */}
       {showSearch && (
-        <div className={`border-b ${
-          darkMode ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-        }`}>
-          <div className="px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
-                  darkMode ? 'text-gray-500' : 'text-gray-400'
-                }`} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  placeholder="Search in JSON..."
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-lg border ${
-                    darkMode 
-                      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                />
-              </div>
-              
-              {searchResults.length > 0 && (
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {currentSearchIndex + 1} of {searchResults.length}
-                  </span>
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => navigateSearch('prev')}
-                      className={`p-1.5 rounded transition-colors ${
-                        darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <ChevronRight className="h-4 w-4 rotate-180" />
-                    </button>
-                    <button
-                      onClick={() => navigateSearch('next')}
-                      className={`p-1.5 rounded transition-colors ${
-                        darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              <button
-                onClick={clearSearch}
-                className={`p-2 rounded-lg transition-colors ${
-                  darkMode ? 'hover:bg-gray-800 text-gray-500' : 'hover:bg-gray-100 text-gray-400'
-                }`}
-              >
-                <X className="h-4 w-4" />
-              </button>
+        <div style={{
+          borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+          backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+          padding: '16px 24px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <Search 
+                size={16} 
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: darkMode ? '#6b7280' : '#9ca3af'
+                }} 
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="Search in JSON..."
+                style={{
+                  width: '100%',
+                  paddingLeft: '40px',
+                  paddingRight: '16px',
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  borderRadius: '8px',
+                  border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                  backgroundColor: darkMode ? '#374151' : '#ffffff',
+                  color: darkMode ? '#ffffff' : '#111827',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
             </div>
+            
+            {searchResults.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '14px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+                  {currentSearchIndex + 1} of {searchResults.length}
+                </span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => navigateSearch('prev')}
+                    style={{
+                      padding: '6px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      cursor: 'pointer',
+                      color: darkMode ? '#9ca3af' : '#6b7280'
+                    }}
+                  >
+                    <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
+                  </button>
+                  <button
+                    onClick={() => navigateSearch('next')}
+                    style={{
+                      padding: '6px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      cursor: 'pointer',
+                      color: darkMode ? '#9ca3af' : '#6b7280'
+                    }}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={clearSearch}
+              style={{
+                padding: '8px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                color: darkMode ? '#6b7280' : '#9ca3af'
+              }}
+            >
+              <X size={16} />
+            </button>
           </div>
         </div>
       )}
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Sidebar */}
-        <div className={`w-72 border-r flex flex-col ${
-          darkMode ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-        }`}>
+        <div style={{
+          width: '280px',
+          borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+          backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
           {/* File Operations */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">File</h3>
-            <div className="space-y-3">
+          <div style={{
+            padding: '20px',
+            borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+          }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              margin: '0 0 12px 0',
+              color: darkMode ? '#f3f4f6' : '#111827'
+            }}>
+              File
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 onClick={openFile}
-                className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  darkMode 
-                    ? 'text-gray-300 hover:bg-gray-800 hover:text-white' 
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                }}
               >
-                <FolderOpen className="h-4 w-4" />
+                <FolderOpen size={16} />
                 <span>Open File</span>
               </button>
               
               <button
                 onClick={saveFile}
                 disabled={!jsonInput.trim()}
-                className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  !jsonInput.trim()
-                    ? 'text-gray-400 cursor-not-allowed'
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: !jsonInput.trim() 
+                    ? '#9ca3af' 
                     : hasUnsavedChanges
-                      ? darkMode 
-                        ? 'text-orange-300 hover:bg-orange-900/20' 
-                        : 'text-orange-700 hover:bg-orange-50'
-                      : darkMode
-                        ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                      ? '#f59e0b'
+                      : (darkMode ? '#d1d5db' : '#374151'),
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  if (jsonInput.trim()) {
+                    e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                }}
               >
-                {hasUnsavedChanges ? <Save className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+                {hasUnsavedChanges ? <Save size={16} /> : <Download size={16} />}
                 <span>{hasUnsavedChanges ? 'Save Changes' : 'Download'}</span>
               </button>
             </div>
           </div>
 
           {/* View Controls */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">View</h3>
-            <div className={`flex rounded-lg p-1 ${
-              darkMode ? 'bg-gray-800' : 'bg-gray-100'
-            }`}>
+          <div style={{
+            padding: '20px',
+            borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+          }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              margin: '0 0 12px 0',
+              color: darkMode ? '#f3f4f6' : '#111827'
+            }}>
+              View
+            </h3>
+            <div style={{
+              display: 'flex',
+              borderRadius: '8px',
+              padding: '4px',
+              backgroundColor: darkMode ? '#374151' : '#f3f4f6'
+            }}>
               <button
                 onClick={() => switchViewMode('editor')}
-                className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'editor'
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400'
-                }`}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: viewMode === 'editor' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
+                  color: viewMode === 'editor' ? (darkMode ? '#f3f4f6' : '#111827') : (darkMode ? '#9ca3af' : '#6b7280'),
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
               >
-                <FileText className="h-4 w-4" />
+                <FileText size={16} />
                 <span>Editor</span>
               </button>
               <button
                 onClick={() => switchViewMode('tree')}
                 disabled={!jsonInput.trim() || !!error}
-                className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'tree'
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                    : !jsonInput.trim() || !!error
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-600 dark:text-gray-400'
-                }`}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: viewMode === 'tree' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
+                  color: !jsonInput.trim() || !!error 
+                    ? '#9ca3af' 
+                    : viewMode === 'tree' 
+                      ? (darkMode ? '#f3f4f6' : '#111827') 
+                      : (darkMode ? '#9ca3af' : '#6b7280'),
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s'
+                }}
               >
-                <TreePine className="h-4 w-4" />
+                <TreePine size={16} />
                 <span>Tree</span>
               </button>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="p-6 flex-1">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions</h3>
-            <div className="space-y-3">
+          <div style={{
+            padding: '20px',
+            flex: 1
+          }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              margin: '0 0 12px 0',
+              color: darkMode ? '#f3f4f6' : '#111827'
+            }}>
+              Actions
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {viewMode === 'editor' ? (
                 <>
                   <button
                     onClick={formatJson}
                     disabled={!jsonInput.trim()}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      !jsonInput.trim()
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : darkMode 
-                          ? 'text-blue-300 hover:bg-blue-900/20' 
-                          : 'text-blue-700 hover:bg-blue-50'
-                    }`}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: !jsonInput.trim() ? '#9ca3af' : '#3b82f6',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (jsonInput.trim()) {
+                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                    }}
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText size={16} />
                     <span>Format JSON</span>
                   </button>
                   
                   <button
                     onClick={minifyJson}
                     disabled={!jsonInput.trim()}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      !jsonInput.trim()
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : darkMode 
-                          ? 'text-green-300 hover:bg-green-900/20' 
-                          : 'text-green-700 hover:bg-green-50'
-                    }`}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: !jsonInput.trim() ? '#9ca3af' : '#10b981',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (jsonInput.trim()) {
+                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                    }}
                   >
-                    <Minimize2 className="h-4 w-4" />
+                    <Minimize2 size={16} />
                     <span>Minify JSON</span>
                   </button>
                 </>
@@ -791,30 +1000,64 @@ const JsonFormatter = () => {
                   <button
                     onClick={expandAll}
                     disabled={!jsonInput.trim() || !!error}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      !jsonInput.trim() || !!error
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : darkMode 
-                          ? 'text-green-300 hover:bg-green-900/20' 
-                          : 'text-green-700 hover:bg-green-50'
-                    }`}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: !jsonInput.trim() || !!error ? '#9ca3af' : '#10b981',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (jsonInput.trim() && !error) {
+                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                    }}
                   >
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown size={16} />
                     <span>Expand All</span>
                   </button>
                   
                   <button
                     onClick={collapseAll}
                     disabled={!jsonInput.trim() || !!error}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      !jsonInput.trim() || !!error
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : darkMode 
-                          ? 'text-orange-300 hover:bg-orange-900/20' 
-                          : 'text-orange-700 hover:bg-orange-50'
-                    }`}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: !jsonInput.trim() || !!error ? '#9ca3af' : '#f59e0b',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (jsonInput.trim() && !error) {
+                        e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                    }}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight size={16} />
                     <span>Collapse All</span>
                   </button>
                 </>
@@ -823,41 +1066,94 @@ const JsonFormatter = () => {
               <button
                 onClick={copyToClipboard}
                 disabled={!jsonInput.trim()}
-                className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  !jsonInput.trim()
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : copied
-                      ? 'text-green-600 dark:text-green-400'
-                      : darkMode 
-                        ? 'text-purple-300 hover:bg-purple-900/20' 
-                        : 'text-purple-700 hover:bg-purple-50'
-                }`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: !jsonInput.trim() 
+                    ? '#9ca3af' 
+                    : copied 
+                      ? '#10b981' 
+                      : '#8b5cf6',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  if (jsonInput.trim()) {
+                    e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                }}
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                <span>{copied ? 'Copied!' : 'Copy to Clipboard'}</span>
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+                <span>{copied ? 'Copied!' : 'Copy'}</span>
               </button>
               
               <button
                 onClick={clearInput}
-                className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  darkMode 
-                    ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-300' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#9ca3af' : '#6b7280',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                }}
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw size={16} />
                 <span>Clear</span>
               </button>
               
               <button
                 onClick={loadSample}
-                className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  darkMode 
-                    ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-300' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#9ca3af' : '#6b7280',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                }}
               >
-                <Upload className="h-4 w-4" />
+                <Upload size={16} />
                 <span>Load Sample</span>
               </button>
             </div>
@@ -865,89 +1161,135 @@ const JsonFormatter = () => {
         </div>
 
         {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Status Bar */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Status Bars */}
           {error && (
-            <div className="px-6 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <p className="text-sm text-red-700 dark:text-red-300 font-medium">
-                  {error}
-                </p>
-              </div>
+            <div style={{
+              padding: '12px 24px',
+              backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
+              borderBottom: `1px solid ${darkMode ? '#dc2626' : '#fecaca'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <div style={{ width: '8px', height: '8px', backgroundColor: '#dc2626', borderRadius: '50%' }}></div>
+              <p style={{ fontSize: '14px', fontWeight: '500', color: darkMode ? '#fca5a5' : '#dc2626', margin: 0 }}>
+                {error}
+              </p>
             </div>
           )}
 
           {hasUnsavedChanges && (
-            <div className="px-6 py-3 bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <p className="text-sm text-orange-700 dark:text-orange-300 font-medium">
-                  You have unsaved changes
-                </p>
-              </div>
+            <div style={{
+              padding: '12px 24px',
+              backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb',
+              borderBottom: `1px solid ${darkMode ? '#f59e0b' : '#fed7aa'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></div>
+              <p style={{ fontSize: '14px', fontWeight: '500', color: darkMode ? '#fbbf24' : '#f59e0b', margin: 0 }}>
+                You have unsaved changes
+              </p>
             </div>
           )}
 
           {/* Content Area */}
-          <div className="flex-1 p-6 overflow-hidden">
+          <div style={{ flex: 1, padding: '24px', overflow: 'hidden' }}>
             {viewMode === 'editor' ? (
-              <div className={`h-full rounded-lg border ${
-                darkMode ? 'border-gray-700' : 'border-gray-300'
-              }`}>
-                <div className={`px-4 py-3 border-b text-sm font-medium ${
-                  darkMode 
-                    ? 'border-gray-700 bg-gray-800 text-gray-300' 
-                    : 'border-gray-200 bg-gray-50 text-gray-700'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span>JSON Editor</span>
-                    {jsonInput.trim() && (
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        error 
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' 
-                          : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                      }`}>
-                        {error ? 'Invalid' : 'Valid JSON'}
-                      </span>
-                    )}
-                  </div>
+              <div style={{
+                height: '100%',
+                borderRadius: '8px',
+                border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  padding: '12px 16px',
+                  borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                  backgroundColor: darkMode ? '#374151' : '#f9fafb',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}>
+                  <span>JSON Editor</span>
+                  {jsonInput.trim() && (
+                    <span style={{
+                      fontSize: '12px',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontWeight: '500',
+                      backgroundColor: error 
+                        ? (darkMode ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2')
+                        : (darkMode ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7'),
+                      color: error 
+                        ? (darkMode ? '#f87171' : '#dc2626')
+                        : (darkMode ? '#4ade80' : '#166534')
+                    }}>
+                      {error ? 'Invalid' : 'Valid JSON'}
+                    </span>
+                  )}
                 </div>
-                <div className="p-4 h-full">
+                <div style={{ flex: 1, padding: '16px', overflow: 'hidden' }}>
                   <textarea
                     ref={textareaRef}
                     value={jsonInput}
                     onChange={handleInputChange}
                     placeholder="Paste or type your JSON here..."
-                    className={`w-full h-full resize-none font-mono text-sm leading-relaxed bg-transparent border-none outline-none ${
-                      darkMode ? 'text-gray-100 placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
-                    }`}
-                    style={{ minHeight: 'calc(100% - 2rem)' }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      outline: 'none',
+                      resize: 'none',
+                      fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+                      fontSize: '14px',
+                      lineHeight: '1.6',
+                      backgroundColor: 'transparent',
+                      color: darkMode ? '#f3f4f6' : '#111827'
+                    }}
                   />
                 </div>
               </div>
             ) : (
-              <div className={`h-full rounded-lg border ${
-                darkMode ? 'border-gray-700' : 'border-gray-300'
-              }`}>
-                <div className={`px-4 py-3 border-b text-sm font-medium ${
-                  darkMode 
-                    ? 'border-gray-700 bg-gray-800 text-gray-300' 
-                    : 'border-gray-200 bg-gray-50 text-gray-700'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span>JSON Tree View</span>
-                    <span className="text-xs text-gray-500">
-                      Click nodes to expand/collapse
-                    </span>
-                  </div>
+              <div style={{
+                height: '100%',
+                borderRadius: '8px',
+                border: `1px solid ${darkMode ? '#374151' : '#d1d5db'}`,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  padding: '12px 16px',
+                  borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                  backgroundColor: darkMode ? '#374151' : '#f9fafb',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}>
+                  <span>JSON Tree View</span>
+                  <span style={{ fontSize: '12px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+                    Click nodes to expand/collapse
+                  </span>
                 </div>
                 
-                <div className={`p-4 h-full overflow-auto ${
-                  darkMode ? 'bg-gray-800' : 'bg-white'
-                }`}>
+                <div style={{
+                  flex: 1,
+                  padding: '16px',
+                  overflow: 'auto',
+                  backgroundColor: darkMode ? '#374151' : '#ffffff',
+                  fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+                  fontSize: '14px'
+                }}>
                   {jsonInput.trim() && !error ? (
-                    <div className="font-mono text-sm">
+                    <div>
                       {(() => {
                         try {
                           const parsed = JSON.parse(jsonInput);
@@ -961,15 +1303,18 @@ const JsonFormatter = () => {
                             );
                           } else {
                             return (
-                              <div className="p-8 text-center">
-                                <span className={`text-lg ${
-                                  darkMode ? 'text-gray-300' : 'text-gray-700'
-                                }`}>
+                              <div style={{ padding: '32px', textAlign: 'center' }}>
+                                <span style={{
+                                  fontSize: '18px',
+                                  color: darkMode ? '#d1d5db' : '#374151'
+                                }}>
                                   {typeof parsed === 'string' ? `"${parsed}"` : String(parsed)}
                                 </span>
-                                <div className={`text-sm mt-2 ${
-                                  darkMode ? 'text-gray-500' : 'text-gray-500'
-                                }`}>
+                                <div style={{
+                                  fontSize: '14px',
+                                  marginTop: '8px',
+                                  color: darkMode ? '#6b7280' : '#6b7280'
+                                }}>
                                   Primitive value - no tree structure
                                 </div>
                               </div>
@@ -981,22 +1326,34 @@ const JsonFormatter = () => {
                       })()}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <TreePine className={`h-16 w-16 mx-auto mb-4 ${
-                          darkMode ? 'text-gray-600' : 'text-gray-400'
-                        }`} />
-                        <p className={`text-lg font-medium ${
-                          darkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
-                          {error ? 'Fix JSON errors to view tree' : 'Enter valid JSON to view tree structure'}
-                        </p>
-                        <p className={`text-sm mt-2 ${
-                          darkMode ? 'text-gray-500' : 'text-gray-500'
-                        }`}>
-                          Switch to Editor mode to input JSON
-                        </p>
-                      </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      textAlign: 'center',
+                      flexDirection: 'column'
+                    }}>
+                      <TreePine size={64} style={{
+                        marginBottom: '16px',
+                        color: darkMode ? '#4b5563' : '#9ca3af'
+                      }} />
+                      <p style={{
+                        fontSize: '18px',
+                        fontWeight: '500',
+                        marginBottom: '8px',
+                        margin: '0 0 8px 0',
+                        color: darkMode ? '#9ca3af' : '#6b7280'
+                      }}>
+                        {error ? 'Fix JSON errors to view tree' : 'Enter valid JSON to view tree structure'}
+                      </p>
+                      <p style={{
+                        fontSize: '14px',
+                        margin: 0,
+                        color: darkMode ? '#6b7280' : '#6b7280'
+                      }}>
+                        Switch to Editor mode to input JSON
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1006,10 +1363,14 @@ const JsonFormatter = () => {
 
           {/* Footer Stats */}
           {jsonInput.trim() && !error && (
-            <div className={`px-6 py-3 border-t text-sm ${
-              darkMode ? 'border-gray-800 bg-gray-900 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-600'
-            }`}>
-              <div className="flex items-center space-x-6">
+            <div style={{
+              padding: '12px 24px',
+              borderTop: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+              backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
+              fontSize: '14px',
+              color: darkMode ? '#9ca3af' : '#6b7280'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                 <span>Characters: {jsonInput.length.toLocaleString()}</span>
                 <span>Lines: {jsonInput.split('\n').length.toLocaleString()}</span>
                 <span>Size: {(new Blob([jsonInput]).size / 1024).toFixed(1)} KB</span>
@@ -1028,7 +1389,7 @@ const JsonFormatter = () => {
         type="file"
         accept=".json,application/json,text/plain"
         onChange={handleFileSelect}
-        className="hidden"
+        style={{ display: 'none' }}
       />
     </div>
   );
