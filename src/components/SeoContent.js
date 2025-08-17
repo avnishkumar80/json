@@ -5,7 +5,7 @@ const SeoContent = ({ darkMode }) => {
     maxWidth: '1200px',
     margin: '0 auto',
     padding: '40px 20px',
-    backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+    backgroundColor: darkMode ? '#111827' : '#f9fafb',
     color: darkMode ? '#f3f4f6' : '#111827'
   };
 

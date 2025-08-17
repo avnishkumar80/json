@@ -1,5 +1,19 @@
 User-agent: *
 Allow: /
-Disallow: /api/
 
 Sitemap: https://guidedjson.com/sitemap.xml
+
+# High-value pages
+Allow: /
+Allow: /formatter
+Allow: /validator
+Allow: /tools
+
+# Block unnecessary paths
+Disallow: /static/js/
+Disallow: /static/css/
+Disallow: /.git/
+Disallow: /node_modules/
+
+# Crawl delay
+Crawl-delay: 1
