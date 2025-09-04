@@ -7,3 +7,6 @@ export { default as SettingsModal } from './Settings';
 export { default as SeoContent } from './SeoContent';
 export { default as TrustBar } from './TrustBar';
 export { default as PerformanceBar } from './PerformanceBar';
+export { default as KeyboardHelpModal } from './KeyboardHelp';
+export { default as ShareModal } from './ShareModal';
+export { default as AutoFixSuggestions } from './AutoFixSuggestions';

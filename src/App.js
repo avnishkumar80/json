@@ -8,14 +8,19 @@ import {
   SettingsModal,
   SeoContent,
   TrustBar,
-  PerformanceBar
+  PerformanceBar,
+  KeyboardHelpModal,
+  ShareModal,
+  AutoFixSuggestions
 } from './components';
 import { useTheme } from './hooks/useTheme';
 import { useFileOperations } from './hooks/useFileOperations';
 import { useSearch } from './hooks/useSearch';
 import { useTreeView } from './hooks/useTreeView';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { validateJson, formatJson, minifyJson } from './utils/jsonUtils';
+import { analyzeJsonErrors, applySingleFix, applyAllFixes } from './utils/jsonAutoFix';
 import { trackEvent } from './utils/analytics';
 import { VIEW_MODES, DEFAULT_SETTINGS, SAMPLE_JSON } from './constants';
 
@@ -27,6 +32,10 @@ const JsonFormatter = () => {
   const [indentSize, setIndentSize] = useState(DEFAULT_SETTINGS.INDENT_SIZE);
   const [viewMode, setViewMode] = useState(VIEW_MODES.EDITOR);
   const [showSettings, setShowSettings] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [autoFixSuggestions, setAutoFixSuggestions] = useState([]);
+  const [showAutoFix, setShowAutoFix] = useState(false);
   
   // Refs
   const textareaRef = useRef(null);
@@ -73,6 +82,19 @@ const JsonFormatter = () => {
     const validation = validateJson(value);
     setError(validation.error);
     checkUnsavedChanges(value);
+    
+    // Analyze for auto-fix suggestions when there's an error
+    if (!validation.isValid && value.trim()) {
+      const analysis = analyzeJsonErrors(value);
+      if (analysis.fixes && analysis.fixes.length > 0) {
+        setAutoFixSuggestions(analysis.fixes);
+        setShowAutoFix(true);
+      } else {
+        setShowAutoFix(false);
+      }
+    } else {
+      setShowAutoFix(false);
+    }
     
     if (searchQuery) {
       performSearch(searchQuery, value);
@@ -164,6 +186,61 @@ const JsonFormatter = () => {
     trackEvent('collapse_all');
   };
 
+  // Keyboard shortcuts integration
+  const { shortcuts } = useKeyboardShortcuts({
+    formatJson: handleFormatJson,
+    minifyJson: handleMinifyJson,
+    toggleSearch: () => toggleSearch(),
+    toggleTheme,
+    clearInput: handleClearInput,
+    loadSample,
+    toggleView: () => switchViewMode(viewMode === VIEW_MODES.EDITOR ? VIEW_MODES.TREE : VIEW_MODES.EDITOR),
+    copyToClipboard,
+    openSettings: () => setShowSettings(true)
+  });
+
+  // Auto-fix handlers
+  const handleApplyFix = (fix) => {
+    const fixedJson = applySingleFix(jsonInput, fix.type);
+    setJsonInput(fixedJson);
+    checkUnsavedChanges(fixedJson);
+    
+    // Re-analyze for remaining issues
+    const validation = validateJson(fixedJson);
+    if (!validation.isValid) {
+      const analysis = analyzeJsonErrors(fixedJson);
+      setAutoFixSuggestions(analysis.fixes || []);
+      setShowAutoFix(analysis.fixes && analysis.fixes.length > 0);
+    } else {
+      setShowAutoFix(false);
+      setError('');
+    }
+    
+    trackEvent('apply_single_fix', { fixType: fix.type });
+  };
+
+  const handleApplyAllFixes = () => {
+    const fixedJson = applyAllFixes(jsonInput);
+    setJsonInput(fixedJson);
+    checkUnsavedChanges(fixedJson);
+    
+    const validation = validateJson(fixedJson);
+    if (validation.isValid) {
+      setError('');
+      setShowAutoFix(false);
+    } else {
+      const analysis = analyzeJsonErrors(fixedJson);
+      setAutoFixSuggestions(analysis.fixes || []);
+      setShowAutoFix(analysis.fixes && analysis.fixes.length > 0);
+    }
+    
+    trackEvent('apply_all_fixes', { fixCount: autoFixSuggestions.length });
+  };
+
+  const handleDismissAutoFix = () => {
+    setShowAutoFix(false);
+  };
+
   const handleSearchChangeWrapper = (e) => {
     handleSearchChange(e, jsonInput);
   };
@@ -173,61 +250,90 @@ const JsonFormatter = () => {
       backgroundColor: darkMode ? '#111827' : '#f9fafb',
       color: darkMode ? '#f3f4f6' : '#111827',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      {/* Main Application */}
-      <div style={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column'
+      {/* Sticky Header */}
+      <Header
+        darkMode={darkMode}
+        toggleTheme={toggleTheme}
+        toggleSearch={toggleSearch}
+        showSearch={showSearch}
+        currentFileName={currentFileName}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onShowKeyboardHelp={() => setShowKeyboardHelp(true)}
+        onShowShareModal={() => setShowShareModal(true)}
+      />
+
+      {/* Trust Bar */}
+      <TrustBar darkMode={darkMode} />
+
+      {/* Search Bar */}
+      <SearchBar
+        showSearch={showSearch}
+        searchQuery={searchQuery}
+        searchResults={searchResults}
+        currentSearchIndex={currentSearchIndex}
+        darkMode={darkMode}
+        onSearchChange={handleSearchChangeWrapper}
+        onNavigateSearch={navigateSearch}
+        onClearSearch={clearSearch}
+        onToggleSearch={toggleSearch}
+      />
+
+      {/* Auto-Fix Suggestions */}
+      {showAutoFix && (
+        <AutoFixSuggestions
+          fixes={autoFixSuggestions}
+          onApplyFix={handleApplyFix}
+          onApplyAllFixes={handleApplyAllFixes}
+          onDismiss={handleDismissAutoFix}
+          darkMode={darkMode}
+        />
+      )}
+
+      {/* Main Content Area with Scroll Container */}
+      <div style={{ 
+        display: 'flex', 
+        flex: 1, 
+        overflow: 'hidden',
+        minHeight: '500px', // Ensure minimum content height
+        height: 'calc(100vh - 200px)' // Account for header, trust bar, etc.
       }}>
-        {/* Header */}
-        <Header
+        {/* Sidebar */}
+        <Sidebar
           darkMode={darkMode}
-          toggleTheme={toggleTheme}
-          toggleSearch={toggleSearch}
-          showSearch={showSearch}
-          currentFileName={currentFileName}
+          openFile={openFile}
+          saveFile={saveFile}
+          jsonInput={jsonInput}
           hasUnsavedChanges={hasUnsavedChanges}
+          viewMode={viewMode}
+          switchViewMode={switchViewMode}
+          error={error}
+          formatJson={handleFormatJson}
+          minifyJson={handleMinifyJson}
+          clearInput={handleClearInput}
+          loadSample={loadSample}
+          setShowSettings={setShowSettings}
         />
 
-        {/* Trust Bar */}
-        <TrustBar darkMode={darkMode} />
-
-        {/* Search Bar */}
-        <SearchBar
-          showSearch={showSearch}
-          searchQuery={searchQuery}
-          searchResults={searchResults}
-          currentSearchIndex={currentSearchIndex}
-          darkMode={darkMode}
-          onSearchChange={handleSearchChangeWrapper}
-          onNavigateSearch={navigateSearch}
-          onClearSearch={clearSearch}
-          onToggleSearch={toggleSearch}
-        />
-
-        {/* Main Content */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* Sidebar */}
-          <Sidebar
-            darkMode={darkMode}
-            openFile={openFile}
-            saveFile={saveFile}
-            jsonInput={jsonInput}
-            hasUnsavedChanges={hasUnsavedChanges}
-            viewMode={viewMode}
-            switchViewMode={switchViewMode}
-            error={error}
-            formatJson={handleFormatJson}
-            minifyJson={handleMinifyJson}
-            clearInput={handleClearInput}
-            loadSample={loadSample}
-            setShowSettings={setShowSettings}
-          />
-
-          {/* Content Area */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Scrollable Content Area */}
+        <div style={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0 // Critical for proper flex behavior
+        }}>
+          {/* JSON Editor/Tree View */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '600px', // Ensure substantial minimum height
+            paddingBottom: '20px' // Extra space to prevent footer overlap
+          }}>
             {viewMode === VIEW_MODES.EDITOR ? (
               <JsonEditor
                 jsonInput={jsonInput}
@@ -251,38 +357,56 @@ const JsonFormatter = () => {
                 onCopyToClipboard={copyToClipboard}
               />
             )}
-
-            {/* Performance Bar */}
-            <PerformanceBar 
-              jsonInput={jsonInput} 
-              error={error} 
-              processingTime={0} 
-            />
           </div>
+
+          {/* Performance Bar - Fixed at bottom of content area */}
+          <PerformanceBar 
+            jsonInput={jsonInput} 
+            error={error} 
+            processingTime={0} 
+          />
         </div>
-
-        {/* Hidden File Input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,application/json"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
-
-        {/* Settings Modal */}
-        <SettingsModal
-          showSettings={showSettings}
-          onClose={() => setShowSettings(false)}
-          darkMode={darkMode}
-          indentSize={indentSize}
-          setIndentSize={setIndentSize}
-          loadSample={loadSample}
-        />
       </div>
 
-      {/* SEO Content - Outside the main app container */}
-      <SeoContent darkMode={darkMode} />
+      {/* SEO Content - Separate scrollable section */}
+      <div style={{
+        backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+        borderTop: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+      }}>
+        <SeoContent darkMode={darkMode} />
+      </div>
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+
+      {/* Modals */}
+      <SettingsModal
+        showSettings={showSettings}
+        onClose={() => setShowSettings(false)}
+        darkMode={darkMode}
+        indentSize={indentSize}
+        setIndentSize={setIndentSize}
+        loadSample={loadSample}
+      />
+
+      <KeyboardHelpModal
+        isOpen={showKeyboardHelp}
+        onClose={() => setShowKeyboardHelp(false)}
+        shortcuts={shortcuts}
+        darkMode={darkMode}
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        jsonContent={jsonInput}
+        darkMode={darkMode}
+      />
     </div>
   );
 };

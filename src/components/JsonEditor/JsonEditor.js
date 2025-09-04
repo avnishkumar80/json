@@ -15,7 +15,9 @@ const JsonEditor = ({
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
-      position: 'relative'
+      position: 'relative',
+      minHeight: '500px', // Ensure minimum height
+      height: '100%'
     }}>
       {/* Error Display */}
       {error && (
@@ -24,7 +26,8 @@ const JsonEditor = ({
           color: darkMode ? '#fca5a5' : '#dc2626',
           padding: '12px 16px',
           fontSize: '14px',
-          borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+          borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+          flexShrink: 0 // Don't shrink the error bar
         }}>
           {error}
         </div>
@@ -34,7 +37,9 @@ const JsonEditor = ({
       <div style={{
         flex: 1,
         position: 'relative',
-        backgroundColor: darkMode ? '#111827' : '#ffffff'
+        backgroundColor: darkMode ? '#111827' : '#ffffff',
+        minHeight: '400px', // Reduced slightly but still substantial
+        height: '100%'
       }}>
         <textarea
           ref={textareaRef}
@@ -53,7 +58,9 @@ const JsonEditor = ({
             lineHeight: '1.6',
             backgroundColor: 'transparent',
             color: darkMode ? '#f3f4f6' : '#111827',
-            tabSize: 2
+            tabSize: 2,
+            boxSizing: 'border-box', // Include padding in height calculation
+            overflow: 'auto' // Allow scrolling within textarea
           }}
           spellCheck={false}
         />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Sun, Moon, Search, Github, Star, Zap } from 'lucide-react';
+import { FileText, Sun, Moon, Search, Github, Star, Zap, Keyboard, Share2 } from 'lucide-react';
 
 const EnhancedHeader = ({
   darkMode,
@@ -7,13 +7,21 @@ const EnhancedHeader = ({
   toggleSearch,
   showSearch,
   currentFileName,
-  hasUnsavedChanges
+  hasUnsavedChanges,
+  onShowKeyboardHelp,
+  onShowShareModal
 }) => {
   return (
     <header style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
       borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
       backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-      padding: '16px 24px'
+      padding: '16px 24px',
+      boxShadow: darkMode 
+        ? '0 1px 3px 0 rgba(0, 0, 0, 0.3)' 
+        : '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
     }}>
       <div style={{
         display: 'flex',
@@ -143,9 +151,47 @@ const EnhancedHeader = ({
               display: 'flex',
               alignItems: 'center'
             }}
-            title="Search JSON (Ctrl+F)"
+            title="Search JSON (Ctrl+K)"
           >
             <Search size={16} />
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={onShowShareModal}
+            style={{
+              padding: '10px',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+              color: darkMode ? '#d1d5db' : '#374151',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            title="Share JSON"
+          >
+            <Share2 size={16} />
+          </button>
+
+          {/* Keyboard Help Button */}
+          <button
+            onClick={onShowKeyboardHelp}
+            style={{
+              padding: '10px',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+              color: darkMode ? '#d1d5db' : '#374151',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            title="Keyboard Shortcuts (?)"
+          >
+            <Keyboard size={16} />
           </button>
           
           {/* Theme Toggle */}
