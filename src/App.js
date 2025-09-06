@@ -7,7 +7,6 @@ import {
   TreeView,
   SettingsModal,
   SeoContent,
-  TrustBar,
   PerformanceBar,
   KeyboardHelpModal,
   ShareModal,
@@ -266,9 +265,6 @@ const JsonFormatter = () => {
         onShowShareModal={() => setShowShareModal(true)}
       />
 
-      {/* Trust Bar */}
-      <TrustBar darkMode={darkMode} />
-
       {/* Search Bar */}
       <SearchBar
         showSearch={showSearch}
@@ -299,7 +295,7 @@ const JsonFormatter = () => {
         flex: 1, 
         overflow: 'hidden',
         minHeight: '500px', // Ensure minimum content height
-        height: 'calc(100vh - 200px)' // Account for header, trust bar, etc.
+        height: 'calc(100vh - 150px)' // Adjusted for cleaner header
       }}>
         {/* Sidebar */}
         <Sidebar

@@ -1,206 +1,170 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const SeoContent = ({ darkMode }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const containerStyle = {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '40px 20px',
-    backgroundColor: darkMode ? '#111827' : '#f9fafb',
+    borderTop: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+    backgroundColor: darkMode ? '#0f172a' : '#f8fafc',
     color: darkMode ? '#f3f4f6' : '#111827'
   };
 
+  const toggleButtonStyle = {
+    width: '100%',
+    padding: '16px 24px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: darkMode ? '#9ca3af' : '#6b7280',
+    transition: 'all 0.2s'
+  };
+
+  const contentStyle = {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '0 20px 40px 20px',
+    display: isExpanded ? 'block' : 'none'
+  };
+
   const headingStyle = {
-    fontSize: '36px',
-    fontWeight: 'bold',
+    fontSize: '24px',
+    fontWeight: '600',
     marginBottom: '16px',
     color: darkMode ? '#f3f4f6' : '#111827'
   };
 
   const subHeadingStyle = {
-    fontSize: '24px',
+    fontSize: '18px',
     fontWeight: '600',
-    marginBottom: '12px',
+    marginBottom: '8px',
     color: darkMode ? '#f3f4f6' : '#111827'
   };
 
   const paragraphStyle = {
-    fontSize: '16px',
+    fontSize: '14px',
     lineHeight: '1.6',
-    marginBottom: '16px',
+    marginBottom: '12px',
     color: darkMode ? '#d1d5db' : '#374151'
   };
 
   const gridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '24px',
-    marginBottom: '40px'
-  };
-
-  const listStyle = {
-    listStyle: 'disc',
-    paddingLeft: '20px',
-    lineHeight: '1.8',
-    color: darkMode ? '#d1d5db' : '#374151'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '20px',
+    marginBottom: '32px'
   };
 
   return (
     <div style={containerStyle}>
-      {/* Hero Section */}
-      <section style={{ marginBottom: '40px', textAlign: 'center' }}>
-        <h1 style={headingStyle}>
-          Professional JSON Formatter & Validator
-        </h1>
-        <p style={{ ...paragraphStyle, fontSize: '18px', maxWidth: '800px', margin: '0 auto 24px' }}>
-          Format, validate, and edit JSON data with our free online JSON formatter. 
-          Features include syntax validation, tree view, minification, and file operations.
-        </p>
-      </section>
+      {/* Collapsible Toggle */}
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={toggleButtonStyle}
+      >
+        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <span>{isExpanded ? 'Hide' : 'Show'} JSON Tool Information</span>
+      </button>
 
-      {/* Features Grid */}
-      <section style={{ marginBottom: '40px' }}>
-        <div style={gridStyle}>
-          <div>
-            <h2 style={subHeadingStyle}>
-              🎨 JSON Formatting & Beautification
-            </h2>
-            <p style={paragraphStyle}>
-              Instantly format and beautify your JSON data with proper indentation. 
-              Choose between 2 or 4 space indentation for optimal readability.
-            </p>
-          </div>
-          
-          <div>
-            <h2 style={subHeadingStyle}>
-              ✅ Real-time JSON Validation
-            </h2>
-            <p style={paragraphStyle}>
-              Validate JSON syntax in real-time with detailed error reporting. 
-              Get precise line and column information for quick debugging.
-            </p>
-          </div>
-          
-          <div>
-            <h2 style={subHeadingStyle}>
-              🌳 Interactive Tree View
-            </h2>
-            <p style={paragraphStyle}>
-              Visualize JSON structure with an interactive tree view. 
-              Expand and collapse nodes to navigate complex JSON data easily.
-            </p>
-          </div>
+      {/* Collapsible Content */}
+      <div style={contentStyle}>
+        {/* Compact Features Grid */}
+        <section style={{ marginBottom: '32px' }}>
+          <div style={gridStyle}>
+            <div>
+              <h3 style={subHeadingStyle}>🎨 JSON Formatting</h3>
+              <p style={paragraphStyle}>
+                Instantly format and beautify JSON data with proper indentation and syntax highlighting.
+              </p>
+            </div>
+            
+            <div>
+              <h3 style={subHeadingStyle}>✅ Real-time Validation</h3>
+              <p style={paragraphStyle}>
+                Validate JSON syntax in real-time with detailed error reporting and auto-fix suggestions.
+              </p>
+            </div>
+            
+            <div>
+              <h3 style={subHeadingStyle}>🌳 Interactive Tree View</h3>
+              <p style={paragraphStyle}>
+                Visualize JSON structure with expandable tree view for easy navigation of complex data.
+              </p>
+            </div>
 
-          <div>
-            <h2 style={subHeadingStyle}>
-              📁 File Operations
-            </h2>
-            <p style={paragraphStyle}>
-              Import JSON files directly from your computer and export formatted results. 
-              Save your work with custom filenames.
-            </p>
-          </div>
+            <div>
+              <h3 style={subHeadingStyle}>⌨️ Keyboard Shortcuts</h3>
+              <p style={paragraphStyle}>
+                Professional keyboard shortcuts for formatting, validation, and navigation (Ctrl+F, Ctrl+K, etc.).
+              </p>
+            </div>
 
-          <div>
-            <h2 style={subHeadingStyle}>
-              🔍 Advanced Search
-            </h2>
-            <p style={paragraphStyle}>
-              Search through your JSON data with powerful search functionality. 
-              Navigate between results with keyboard shortcuts.
-            </p>
-          </div>
+            <div>
+              <h3 style={subHeadingStyle}>🔍 Advanced Search</h3>
+              <p style={paragraphStyle}>
+                Search through JSON data with powerful search functionality and result navigation.
+              </p>
+            </div>
 
-          <div>
-            <h2 style={subHeadingStyle}>
-              🎯 JSON Minification
-            </h2>
-            <p style={paragraphStyle}>
-              Compress JSON by removing unnecessary whitespace. 
-              Perfect for optimizing API responses and reducing file sizes.
-            </p>
+            <div>
+              <h3 style={subHeadingStyle}>🔗 Share & Export</h3>
+              <p style={paragraphStyle}>
+                Share JSON via URLs, export files, and copy formatted results with one click.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
-      
-      {/* Benefits Section */}
-      <section style={{ marginBottom: '40px' }}>
-        <h2 style={{ ...subHeadingStyle, fontSize: '28px' }}>
-          Why Choose GuidedJSON?
-        </h2>
-        <ul style={listStyle}>
-          <li>100% free JSON formatting and validation tools</li>
-          <li>No registration or sign-up required</li>
-          <li>Works offline - no data sent to servers</li>
-          <li>Professional features for developers</li>
-          <li>Dark and light theme support</li>
-          <li>Mobile-friendly responsive design</li>
-          <li>File import and export capabilities</li>
-          <li>Advanced search functionality</li>
-          <li>Real-time syntax validation</li>
-          <li>Copy to clipboard with one click</li>
-        </ul>
-      </section>
+        </section>
+        
+        {/* Compact Benefits */}
+        <section style={{ marginBottom: '32px' }}>
+          <h2 style={headingStyle}>Why Choose GuidedJSON?</h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+            fontSize: '14px',
+            color: darkMode ? '#d1d5db' : '#374151'
+          }}>
+            <div>✅ 100% Free & No Registration</div>
+            <div>🔒 100% Client-Side Processing</div>
+            <div>⚡ Lightning Fast Performance</div>
+            <div>📱 Mobile-Friendly Design</div>
+            <div>🎨 Dark & Light Themes</div>
+            <div>⌨️ Professional Shortcuts</div>
+            <div>🛠️ Auto-Fix Suggestions</div>
+            <div>🔍 Advanced Search Features</div>
+          </div>
+        </section>
 
-      {/* How to Use Section */}
-      <section style={{ marginBottom: '40px' }}>
-        <h2 style={{ ...subHeadingStyle, fontSize: '28px' }}>
-          How to Use GuidedJSON
-        </h2>
-        <div style={gridStyle}>
-          <div>
-            <h3 style={subHeadingStyle}>1. Input Your JSON</h3>
-            <p style={paragraphStyle}>
-              Paste your JSON data into the editor or open a file from your computer. 
-              The tool will automatically detect and validate the JSON format.
-            </p>
+        {/* Compact FAQ */}
+        <section>
+          <h2 style={headingStyle}>FAQ</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+            <div>
+              <h4 style={{ ...subHeadingStyle, fontSize: '16px', marginBottom: '4px' }}>Is it free?</h4>
+              <p style={paragraphStyle}>Yes, completely free with no limitations or registration required.</p>
+            </div>
+            <div>
+              <h4 style={{ ...subHeadingStyle, fontSize: '16px', marginBottom: '4px' }}>Is it secure?</h4>
+              <p style={paragraphStyle}>Absolutely. All processing happens in your browser. No data is sent to servers.</p>
+            </div>
+            <div>
+              <h4 style={{ ...subHeadingStyle, fontSize: '16px', marginBottom: '4px' }}>Works offline?</h4>
+              <p style={paragraphStyle}>Yes, once loaded you can format and validate JSON without internet connection.</p>
+            </div>
+            <div>
+              <h4 style={{ ...subHeadingStyle, fontSize: '16px', marginBottom: '4px' }}>File support?</h4>
+              <p style={paragraphStyle}>Import .json files and plain text. Export as .json with custom filenames.</p>
+            </div>
           </div>
-          <div>
-            <h3 style={subHeadingStyle}>2. Format & Validate</h3>
-            <p style={paragraphStyle}>
-              Click "Format JSON" to beautify your data or "Minify JSON" to compress it. 
-              Any syntax errors will be highlighted with detailed error messages.
-            </p>
-          </div>
-          <div>
-            <h3 style={subHeadingStyle}>3. Explore & Edit</h3>
-            <p style={paragraphStyle}>
-              Switch to Tree View to visualize your JSON structure. 
-              Use the search function to quickly find specific keys or values.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section>
-        <h2 style={{ ...subHeadingStyle, fontSize: '28px' }}>
-          Frequently Asked Questions
-        </h2>
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={subHeadingStyle}>Is GuidedJSON free to use?</h3>
-          <p style={paragraphStyle}>
-            Yes, GuidedJSON is completely free to use. No registration, no hidden fees, no limitations.
-          </p>
-        </div>
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={subHeadingStyle}>Is my JSON data secure?</h3>
-          <p style={paragraphStyle}>
-            Absolutely. All processing happens in your browser. Your JSON data never leaves your computer.
-          </p>
-        </div>
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={subHeadingStyle}>Can I use this tool offline?</h3>
-          <p style={paragraphStyle}>
-            Yes, once loaded, GuidedJSON works offline. You can format and validate JSON without an internet connection.
-          </p>
-        </div>
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={subHeadingStyle}>What file formats are supported?</h3>
-          <p style={paragraphStyle}>
-            You can import .json files and plain text files. Export options include .json format with custom filenames.
-          </p>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 };
