@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Copy, Check, GitCompare, X } from 'lucide-react';
+import * as Diff from 'diff';
 
 const CompareView = ({
   darkMode,
@@ -14,19 +15,30 @@ const CompareView = ({
   // Parse and compare JSON
   const comparison = useMemo(() => {
     if (!leftJson.trim() || !rightJson.trim()) {
-      return { differences: [], identical: false };
+      return { differences: [], identical: false, leftFormatted: '', rightFormatted: '', charDiffs: [] };
     }
 
     try {
       const leftParsed = JSON.parse(leftJson);
       const rightParsed = JSON.parse(rightJson);
       
-      const diffs = findDifferences(leftParsed, rightParsed);
-      const identical = diffs.length === 0 && JSON.stringify(leftParsed) === JSON.stringify(rightParsed);
+      // Format both for comparison
+      const leftFormatted = JSON.stringify(leftParsed, null, 2);
+      const rightFormatted = JSON.stringify(rightParsed, null, 2);
       
-      return { differences: diffs, identical };
+      const diffs = findDifferences(leftParsed, rightParsed);
+      const charDiffs = Diff.diffWords(leftFormatted, rightFormatted);
+      const identical = diffs.length === 0 && leftFormatted === rightFormatted;
+      
+      return { 
+        differences: diffs, 
+        identical,
+        leftFormatted,
+        rightFormatted,
+        charDiffs
+      };
     } catch (e) {
-      return { differences: [], identical: false, error: true };
+      return { differences: [], identical: false, error: true, charDiffs: [] };
     }
   }, [leftJson, rightJson]);
 
@@ -193,322 +205,316 @@ const CompareView = ({
       {/* Comparison Content */}
       <div style={{
         flex: 1,
-        display: 'flex',
-        overflow: 'hidden'
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        overflow: 'hidden',
+        minHeight: 0
       }}>
         {/* Left Panel */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          borderRight: `2px solid ${darkMode ? '#4b5563' : '#d1d5db'}`
-        }}>
-          {/* Left Header */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-            backgroundColor: darkMode ? '#1f2937' : '#f9fafb'
-          }}>
-            <span style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: darkMode ? '#f3f4f6' : '#111827'
-            }}>
-              Original
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => formatJson(leftJson, 'left')}
-                disabled={!leftJson.trim() || !!leftError}
-                style={{
-                  padding: '4px 8px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: !leftJson.trim() || !!leftError ? 'not-allowed' : 'pointer',
-                  backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                  color: darkMode ? '#d1d5db' : '#374151',
-                  fontSize: '12px',
-                  opacity: !leftJson.trim() || !!leftError ? 0.5 : 1
-                }}
-              >
-                Format
-              </button>
-              <button
-                onClick={() => copyToClipboard(leftJson, 'left')}
-                disabled={!leftJson.trim()}
-                style={{
-                  padding: '4px 8px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: !leftJson.trim() ? 'not-allowed' : 'pointer',
-                  backgroundColor: copied === 'left' ? '#10b981' : (darkMode ? '#374151' : '#f3f4f6'),
-                  color: copied === 'left' ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                {copied === 'left' ? <Check size={12} /> : <Copy size={12} />}
-                {copied === 'left' ? 'Copied' : 'Copy'}
-              </button>
-            </div>
-          </div>
-
-          {/* Left Error */}
-          {leftError && (
-            <div style={{
-              backgroundColor: darkMode ? '#7f1d1d' : '#fef2f2',
-              color: darkMode ? '#fca5a5' : '#dc2626',
-              padding: '8px 16px',
-              fontSize: '12px',
-              borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
-            }}>
-              {leftError}
-            </div>
-          )}
-
-          {/* Left Editor */}
-          <textarea
-            value={leftJson}
-            onChange={handleLeftChange}
-            placeholder="Paste first JSON here..."
-            style={{
-              flex: 1,
-              padding: '16px',
-              border: 'none',
-              resize: 'none',
-              outline: 'none',
-              fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
-              fontSize: '13px',
-              lineHeight: '1.6',
-              backgroundColor: darkMode ? '#111827' : '#ffffff',
-              color: darkMode ? '#f3f4f6' : '#111827',
-              tabSize: 2
-            }}
-            spellCheck={false}
-          />
-        </div>
+        <DiffPanel
+          json={leftJson}
+          formattedJson={comparison.leftFormatted}
+          error={leftError}
+          side="left"
+          label="Original"
+          darkMode={darkMode}
+          copied={copied === 'left'}
+          charDiffs={comparison.charDiffs}
+          onJsonChange={handleLeftChange}
+          onFormat={() => formatJson(leftJson, 'left')}
+          onCopy={() => copyToClipboard(leftJson, 'left')}
+        />
 
         {/* Right Panel */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Right Header */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-            backgroundColor: darkMode ? '#1f2937' : '#f9fafb'
-          }}>
-            <span style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: darkMode ? '#f3f4f6' : '#111827'
-            }}>
-              Modified
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => formatJson(rightJson, 'right')}
-                disabled={!rightJson.trim() || !!rightError}
-                style={{
-                  padding: '4px 8px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: !rightJson.trim() || !!rightError ? 'not-allowed' : 'pointer',
-                  backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                  color: darkMode ? '#d1d5db' : '#374151',
-                  fontSize: '12px',
-                  opacity: !rightJson.trim() || !!rightError ? 0.5 : 1
-                }}
-              >
-                Format
-              </button>
-              <button
-                onClick={() => copyToClipboard(rightJson, 'right')}
-                disabled={!rightJson.trim()}
-                style={{
-                  padding: '4px 8px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: !rightJson.trim() ? 'not-allowed' : 'pointer',
-                  backgroundColor: copied === 'right' ? '#10b981' : (darkMode ? '#374151' : '#f3f4f6'),
-                  color: copied === 'right' ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                {copied === 'right' ? <Check size={12} /> : <Copy size={12} />}
-                {copied === 'right' ? 'Copied' : 'Copy'}
-              </button>
-            </div>
-          </div>
-
-          {/* Right Error */}
-          {rightError && (
-            <div style={{
-              backgroundColor: darkMode ? '#7f1d1d' : '#fef2f2',
-              color: darkMode ? '#fca5a5' : '#dc2626',
-              padding: '8px 16px',
-              fontSize: '12px',
-              borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
-            }}>
-              {rightError}
-            </div>
-          )}
-
-          {/* Right Editor */}
-          <textarea
-            value={rightJson}
-            onChange={handleRightChange}
-            placeholder="Paste second JSON here..."
-            style={{
-              flex: 1,
-              padding: '16px',
-              border: 'none',
-              resize: 'none',
-              outline: 'none',
-              fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
-              fontSize: '13px',
-              lineHeight: '1.6',
-              backgroundColor: darkMode ? '#111827' : '#ffffff',
-              color: darkMode ? '#f3f4f6' : '#111827',
-              tabSize: 2
-            }}
-            spellCheck={false}
-          />
-        </div>
+        <DiffPanel
+          json={rightJson}
+          formattedJson={comparison.rightFormatted}
+          error={rightError}
+          side="right"
+          label="Modified"
+          darkMode={darkMode}
+          copied={copied === 'right'}
+          charDiffs={comparison.charDiffs}
+          onJsonChange={handleRightChange}
+          onFormat={() => formatJson(rightJson, 'right')}
+          onCopy={() => copyToClipboard(rightJson, 'right')}
+        />
       </div>
-
-      {/* Differences Panel */}
-      {leftJson.trim() && rightJson.trim() && !leftError && !rightError && (
-        <div style={{
-          maxHeight: '250px',
-          minHeight: comparison.differences.length > 0 ? '150px' : 'auto',
-          overflow: 'auto',
-          borderTop: `2px solid ${darkMode ? '#4b5563' : '#d1d5db'}`,
-          backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
-          padding: '16px'
-        }}>
-          {comparison.differences.length > 0 ? (
-            <>
-              <h3 style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                margin: '0 0 12px 0',
-                color: darkMode ? '#f3f4f6' : '#111827'
-              }}>
-                Differences Found ({comparison.differences.length})
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {comparison.differences.map((diff, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '6px',
-                      backgroundColor: darkMode ? '#374151' : '#ffffff',
-                      border: `1px solid ${darkMode ? '#4b5563' : '#e5e7eb'}`,
-                      fontSize: '13px'
-                    }}
-                  >
-                    <div style={{
-                      color: darkMode ? '#fbbf24' : '#d97706',
-                      fontWeight: '600',
-                      marginBottom: '6px',
-                      fontFamily: 'monospace',
-                      fontSize: '13px'
-                    }}>
-                      📍 {diff.path || 'root'}
-                    </div>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '12px',
-                      fontSize: '12px'
-                    }}>
-                      <div style={{
-                        padding: '6px 8px',
-                        backgroundColor: darkMode ? '#7f1d1d' : '#fee2e2',
-                        borderRadius: '4px',
-                        border: `1px solid ${darkMode ? '#991b1b' : '#fecaca'}`
-                      }}>
-                        <div style={{ 
-                          color: darkMode ? '#fca5a5' : '#991b1b',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          marginBottom: '4px'
-                        }}>
-                          ORIGINAL
-                        </div>
-                        <div style={{ 
-                          color: darkMode ? '#f87171' : '#dc2626',
-                          fontFamily: 'monospace',
-                          wordBreak: 'break-word'
-                        }}>
-                          {diff.left === undefined ? '(not present)' : JSON.stringify(diff.left, null, 2)}
-                        </div>
-                      </div>
-                      <div style={{
-                        padding: '6px 8px',
-                        backgroundColor: darkMode ? '#064e3b' : '#d1fae5',
-                        borderRadius: '4px',
-                        border: `1px solid ${darkMode ? '#065f46' : '#a7f3d0'}`
-                      }}>
-                        <div style={{ 
-                          color: darkMode ? '#6ee7b7' : '#065f46',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          marginBottom: '4px'
-                        }}>
-                          MODIFIED
-                        </div>
-                        <div style={{ 
-                          color: darkMode ? '#34d399' : '#059669',
-                          fontFamily: 'monospace',
-                          wordBreak: 'break-word'
-                        }}>
-                          {diff.right === undefined ? '(not present)' : JSON.stringify(diff.right, null, 2)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '20px',
-              color: darkMode ? '#6ee7b7' : '#059669',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              ✓ The JSON files are identical
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
 
-// Helper function to find differences between two JSON objects
+// Diff Panel Component with inline character-level highlighting
+const DiffPanel = ({
+  json,
+  formattedJson,
+  error,
+  side,
+  label,
+  darkMode,
+  copied,
+  charDiffs,
+  onJsonChange,
+  onFormat,
+  onCopy
+}) => {
+  const lines = (formattedJson || json).split('\n');
+  const maxLineNumber = lines.length;
+  const lineNumberWidth = Math.max(String(maxLineNumber).length * 8 + 16, 50);
+
+  // Render content with inline diff highlighting
+  const renderDiffContent = () => {
+    if (!formattedJson || charDiffs.length === 0) {
+      return null;
+    }
+
+    let lineNumber = 1;
+    const renderedLines = [];
+    let currentLine = [];
+    let charIndex = 0;
+
+    charDiffs.forEach((part, partIndex) => {
+      const text = part.value;
+      const isAdded = part.added;
+      const isRemoved = part.removed;
+      const isUnchanged = !isAdded && !isRemoved;
+
+      // Show removed parts only on left side, added only on right side
+      if ((side === 'left' && isAdded) || (side === 'right' && isRemoved)) {
+        return; // Skip this part for this side
+      }
+
+      const chars = text.split('');
+      
+      chars.forEach((char, charIdx) => {
+        if (char === '\n') {
+          // End of line - push current line
+          renderedLines.push({
+            lineNumber: lineNumber,
+            content: currentLine,
+            hasChanges: currentLine.some(c => c.isHighlighted)
+          });
+          lineNumber++;
+          currentLine = [];
+        } else {
+          currentLine.push({
+            char: char,
+            isHighlighted: (side === 'left' && isRemoved) || (side === 'right' && isAdded),
+            type: isRemoved ? 'removed' : isAdded ? 'added' : 'unchanged'
+          });
+        }
+        charIndex++;
+      });
+    });
+
+    // Push last line if exists
+    if (currentLine.length > 0) {
+      renderedLines.push({
+        lineNumber: lineNumber,
+        content: currentLine,
+        hasChanges: currentLine.some(c => c.isHighlighted)
+      });
+    }
+
+    return renderedLines;
+  };
+
+  const diffLines = renderDiffContent();
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      borderRight: side === 'left' ? `1px solid ${darkMode ? '#4b5563' : '#d1d5db'}` : 'none',
+      minWidth: 0,
+      width: '100%',
+      minHeight: 0,
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+        backgroundColor: darkMode ? '#1f2937' : '#f9fafb'
+      }}>
+        <span style={{
+          fontSize: '14px',
+          fontWeight: '600',
+          color: darkMode ? '#f3f4f6' : '#111827'
+        }}>
+          {label}
+        </span>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={onFormat}
+            disabled={!json.trim() || !!error}
+            style={{
+              padding: '4px 8px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: !json.trim() || !!error ? 'not-allowed' : 'pointer',
+              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+              color: darkMode ? '#d1d5db' : '#374151',
+              fontSize: '12px',
+              opacity: !json.trim() || !!error ? 0.5 : 1
+            }}
+          >
+            Format
+          </button>
+          <button
+            onClick={onCopy}
+            disabled={!json.trim()}
+            style={{
+              padding: '4px 8px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: !json.trim() ? 'not-allowed' : 'pointer',
+              backgroundColor: copied ? '#10b981' : (darkMode ? '#374151' : '#f3f4f6'),
+              color: copied ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div style={{
+          backgroundColor: darkMode ? '#7f1d1d' : '#fef2f2',
+          color: darkMode ? '#fca5a5' : '#dc2626',
+          padding: '8px 16px',
+          fontSize: '12px',
+          borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Editor with inline highlighting */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        position: 'relative',
+        backgroundColor: darkMode ? '#111827' : '#ffffff',
+        minHeight: 0
+      }}>
+        {diffLines ? (
+          <>
+            {/* Line numbers */}
+            <div style={{
+              width: `${lineNumberWidth}px`,
+              backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
+              borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+              padding: '16px 0',
+              fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
+              fontSize: '13px',
+              lineHeight: '1.6',
+              color: darkMode ? '#6b7280' : '#9ca3af',
+              textAlign: 'right',
+              userSelect: 'none',
+              flexShrink: 0,
+              overflowY: 'hidden'
+            }}>
+              {diffLines.map((line, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '0 8px',
+                    minHeight: '20.8px'
+                  }}
+                >
+                  {line.lineNumber}
+                </div>
+              ))}
+            </div>
+
+            {/* Content with character-level highlighting */}
+            <div style={{
+              flex: 1,
+              overflow: 'auto',
+              minHeight: 0,
+              minWidth: 0
+            }}>
+              <pre style={{
+                margin: 0,
+                padding: '16px',
+                fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
+                fontSize: '13px',
+                lineHeight: '1.6',
+                color: darkMode ? '#f3f4f6' : '#111827',
+                whiteSpace: 'pre',
+                overflowX: 'auto',
+                minWidth: 'fit-content'
+              }}>
+                {diffLines.map((line, lineIndex) => (
+                  <div key={lineIndex} style={{ minHeight: '20.8px' }}>
+                    {line.content.map((charData, charIndex) => (
+                      <span
+                        key={charIndex}
+                        style={{
+                          backgroundColor: charData.isHighlighted 
+                            ? (side === 'left' 
+                                ? (darkMode ? 'rgba(220, 38, 38, 0.25)' : 'rgba(254, 226, 226, 0.7)')
+                                : (darkMode ? 'rgba(5, 150, 105, 0.25)' : 'rgba(167, 243, 208, 0.7)'))
+                            : 'transparent',
+                          color: charData.isHighlighted 
+                            ? (side === 'left' 
+                                ? (darkMode ? '#fca5a5' : '#991b1b')
+                                : (darkMode ? '#6ee7b7' : '#065f46'))
+                            : 'inherit'
+                        }}
+                      >
+                        {charData.char}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            </div>
+          </>
+        ) : (
+          <textarea
+            value={json}
+            onChange={onJsonChange}
+            placeholder={`Paste ${label.toLowerCase()} JSON here...`}
+            style={{
+              width: '100%',
+              height: '100%',
+              padding: '16px',
+              paddingLeft: `${lineNumberWidth + 16}px`,
+              border: 'none',
+              resize: 'none',
+              outline: 'none',
+              fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
+              fontSize: '13px',
+              lineHeight: '1.6',
+              backgroundColor: 'transparent',
+              color: darkMode ? '#f3f4f6' : '#111827',
+              tabSize: 2
+            }}
+            spellCheck={false}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Helper function to find structural differences
 const findDifferences = (obj1, obj2, path = '') => {
   const differences = [];
 
   const traverse = (left, right, currentPath) => {
-    // Check if types are different
     const leftType = Array.isArray(left) ? 'array' : typeof left;
     const rightType = Array.isArray(right) ? 'array' : typeof right;
 
@@ -522,7 +528,6 @@ const findDifferences = (obj1, obj2, path = '') => {
       return;
     }
 
-    // Handle null
     if (left === null || right === null) {
       if (left !== right) {
         differences.push({
@@ -535,7 +540,6 @@ const findDifferences = (obj1, obj2, path = '') => {
       return;
     }
 
-    // Handle primitives
     if (leftType !== 'object') {
       if (left !== right) {
         differences.push({
@@ -548,7 +552,6 @@ const findDifferences = (obj1, obj2, path = '') => {
       return;
     }
 
-    // Handle arrays
     if (Array.isArray(left)) {
       if (left.length !== right.length) {
         differences.push({
@@ -583,7 +586,6 @@ const findDifferences = (obj1, obj2, path = '') => {
       return;
     }
 
-    // Handle objects
     const allKeys = new Set([...Object.keys(left), ...Object.keys(right)]);
     
     for (const key of allKeys) {
