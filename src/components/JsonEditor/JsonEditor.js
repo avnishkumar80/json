@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Copy, Check } from 'lucide-react';
 
 const JsonEditor = ({
@@ -8,15 +8,37 @@ const JsonEditor = ({
   copied,
   textareaRef,
   onInputChange,
-  onCopyToClipboard
+  onCopyToClipboard,
+  searchResults = [],
+  currentSearchIndex = -1
 }) => {
+  // Scroll to current search result
+  useEffect(() => {
+    if (searchResults.length > 0 && currentSearchIndex >= 0 && textareaRef.current) {
+      const result = searchResults[currentSearchIndex];
+      if (result) {
+        // Set selection to highlight the current match
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(result.start, result.end);
+        
+        // Calculate the line to scroll to
+        const lines = jsonInput.substring(0, result.start).split('\n');
+        const lineNumber = lines.length;
+        const lineHeight = 22.4; // 14px font * 1.6 line-height
+        const scrollTop = (lineNumber - 1) * lineHeight - 100; // Offset for better visibility
+        
+        textareaRef.current.scrollTop = Math.max(0, scrollTop);
+      }
+    }
+  }, [currentSearchIndex, searchResults, jsonInput, textareaRef]);
+
   return (
     <div style={{
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      minHeight: '500px', // Ensure minimum height
+      minHeight: '500px',
       height: '100%'
     }}>
       {/* Error Display */}
@@ -27,7 +49,7 @@ const JsonEditor = ({
           padding: '12px 16px',
           fontSize: '14px',
           borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-          flexShrink: 0 // Don't shrink the error bar
+          flexShrink: 0
         }}>
           {error}
         </div>
@@ -38,7 +60,7 @@ const JsonEditor = ({
         flex: 1,
         position: 'relative',
         backgroundColor: darkMode ? '#111827' : '#ffffff',
-        minHeight: '400px', // Reduced slightly but still substantial
+        minHeight: '400px',
         height: '100%'
       }}>
         <textarea
@@ -59,8 +81,8 @@ const JsonEditor = ({
             backgroundColor: 'transparent',
             color: darkMode ? '#f3f4f6' : '#111827',
             tabSize: 2,
-            boxSizing: 'border-box', // Include padding in height calculation
-            overflow: 'auto' // Allow scrolling within textarea
+            boxSizing: 'border-box',
+            overflow: 'auto'
           }}
           spellCheck={false}
         />
@@ -84,7 +106,8 @@ const JsonEditor = ({
               alignItems: 'center',
               gap: '6px',
               fontSize: '14px',
-              fontWeight: '500'
+              fontWeight: '500',
+              zIndex: 3
             }}
             title={copied ? 'Copied!' : 'Copy to clipboard'}
           >

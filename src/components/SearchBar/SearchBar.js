@@ -14,6 +14,21 @@ const SearchBar = ({
 }) => {
   if (!showSearch) return null;
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        if (e.shiftKey) {
+          onNavigateSearch('prev');
+        } else {
+          onNavigateSearch('next');
+        }
+      }
+    } else if (e.key === 'Escape') {
+      onToggleSearch();
+    }
+  };
+
   return (
     <div style={{
       borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
@@ -42,9 +57,10 @@ const SearchBar = ({
           />
           <input
             type="text"
-            placeholder="Search JSON..."
+            placeholder="Search JSON... (Enter to navigate)"
             value={searchQuery}
             onChange={onSearchChange}
+            onKeyDown={handleKeyDown}
             style={{
               width: '100%',
               padding: '8px 12px 8px 36px',
@@ -81,7 +97,7 @@ const SearchBar = ({
                   color: darkMode ? '#d1d5db' : '#374151',
                   transition: 'all 0.2s'
                 }}
-                title="Previous result"
+                title="Previous result (Shift+Enter)"
               >
                 <ChevronUp size={14} />
               </button>
@@ -97,7 +113,7 @@ const SearchBar = ({
                   color: darkMode ? '#d1d5db' : '#374151',
                   transition: 'all 0.2s'
                 }}
-                title="Next result"
+                title="Next result (Enter)"
               >
                 <ChevronDown size={14} />
               </button>
@@ -116,7 +132,7 @@ const SearchBar = ({
             color: darkMode ? '#d1d5db' : '#374151',
             transition: 'all 0.2s'
           }}
-          title="Close search"
+          title="Close search (Esc)"
         >
           <X size={14} />
         </button>

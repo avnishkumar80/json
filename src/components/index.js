@@ -10,3 +10,4 @@ export { default as PerformanceBar } from './PerformanceBar';
 export { default as KeyboardHelpModal } from './KeyboardHelp';
 export { default as ShareModal } from './ShareModal';
 export { default as AutoFixSuggestions } from './AutoFixSuggestions';
+export { default as CompareView } from './CompareView';

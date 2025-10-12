@@ -10,7 +10,8 @@ import {
   PerformanceBar,
   KeyboardHelpModal,
   ShareModal,
-  AutoFixSuggestions
+  AutoFixSuggestions,
+  CompareView
 } from './components';
 import { useTheme } from './hooks/useTheme';
 import { useFileOperations } from './hooks/useFileOperations';
@@ -35,6 +36,7 @@ const JsonFormatter = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [autoFixSuggestions, setAutoFixSuggestions] = useState([]);
   const [showAutoFix, setShowAutoFix] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Refs
   const textareaRef = useRef(null);
@@ -244,6 +246,20 @@ const JsonFormatter = () => {
     handleSearchChange(e, jsonInput);
   };
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  // Show compare view
+  if (viewMode === 'compare') {
+    return (
+      <CompareView
+        darkMode={darkMode}
+        onClose={() => setViewMode(VIEW_MODES.EDITOR)}
+      />
+    );
+  }
+
   return (
     <div style={{
       backgroundColor: darkMode ? '#111827' : '#f9fafb',
@@ -265,18 +281,20 @@ const JsonFormatter = () => {
         onShowShareModal={() => setShowShareModal(true)}
       />
 
-      {/* Search Bar */}
-      <SearchBar
-        showSearch={showSearch}
-        searchQuery={searchQuery}
-        searchResults={searchResults}
-        currentSearchIndex={currentSearchIndex}
-        darkMode={darkMode}
-        onSearchChange={handleSearchChangeWrapper}
-        onNavigateSearch={navigateSearch}
-        onClearSearch={clearSearch}
-        onToggleSearch={toggleSearch}
-      />
+      {/* Search Bar - Only show in editor mode, hidden in tree mode as search is integrated there */}
+      {viewMode === VIEW_MODES.EDITOR && (
+        <SearchBar
+          showSearch={showSearch}
+          searchQuery={searchQuery}
+          searchResults={searchResults}
+          currentSearchIndex={currentSearchIndex}
+          darkMode={darkMode}
+          onSearchChange={handleSearchChangeWrapper}
+          onNavigateSearch={navigateSearch}
+          onClearSearch={clearSearch}
+          onToggleSearch={toggleSearch}
+        />
+      )}
 
       {/* Auto-Fix Suggestions */}
       {showAutoFix && (
@@ -312,6 +330,8 @@ const JsonFormatter = () => {
           clearInput={handleClearInput}
           loadSample={loadSample}
           setShowSettings={setShowSettings}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
         />
 
         {/* Scrollable Content Area */}
@@ -339,6 +359,8 @@ const JsonFormatter = () => {
                 textareaRef={textareaRef}
                 onInputChange={handleInputChange}
                 onCopyToClipboard={copyToClipboard}
+                searchResults={searchResults}
+                currentSearchIndex={currentSearchIndex}
               />
             ) : (
               <TreeView
@@ -351,6 +373,14 @@ const JsonFormatter = () => {
                 onExpandAll={handleExpandAll}
                 onCollapseAll={handleCollapseAll}
                 onCopyToClipboard={copyToClipboard}
+                showSearch={showSearch}
+                searchQuery={searchQuery}
+                searchResults={searchResults}
+                currentSearchIndex={currentSearchIndex}
+                onSearchChange={handleSearchChangeWrapper}
+                onNavigateSearch={navigateSearch}
+                onClearSearch={clearSearch}
+                onToggleSearch={toggleSearch}
               />
             )}
           </div>
