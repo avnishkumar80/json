@@ -19,8 +19,8 @@ const TreeNode = ({
 
   // Check if this node matches search
   const matchingResult = searchResults.find(result => result.path === path);
-  const isCurrentMatch = matchingResult && searchResults[currentSearchIndex]?.path === path;
   const isMatch = !!matchingResult;
+  const isCurrentMatch = currentSearchIndex >= 0 && searchResults[currentSearchIndex]?.path === path;
 
   const renderValue = (value) => {
     const color = getValueColor(value, darkMode);
@@ -35,22 +35,16 @@ const TreeNode = ({
   };
 
   // Highlight function for matching text
-  const highlightText = (text, shouldHighlight) => {
-    if (!shouldHighlight || !matchingResult) return text;
-    
-    const query = searchResults.length > 0 ? 
-      (matchingResult.matchType === 'key' ? nodeKey : String(data)) : 
-      '';
-    
-    if (!query) return text;
+  const highlightText = (text) => {
+    if (!matchingResult) return text;
 
     return (
       <span style={{
-        backgroundColor: isCurrentMatch ? '#fbbf24' : '#fef3c7',
-        color: isCurrentMatch ? '#000' : 'inherit',
+        backgroundColor: isCurrentMatch ? '#f59e0b' : '#fbbf24',
+        color: '#000',
         padding: '2px 4px',
         borderRadius: '3px',
-        fontWeight: isCurrentMatch ? '600' : '500'
+        fontWeight: isCurrentMatch ? '700' : '600'
       }}>
         {text}
       </span>
@@ -60,6 +54,7 @@ const TreeNode = ({
   return (
     <div key={path} style={{ userSelect: 'text' }}>
       <div 
+        data-path={path}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -69,23 +64,23 @@ const TreeNode = ({
           transition: 'background-color 0.2s',
           paddingLeft: `${level * 24 + 12}px`,
           color: darkMode ? '#d1d5db' : '#374151',
-          backgroundColor: isCurrentMatch ? 
-            (darkMode ? 'rgba(251, 191, 36, 0.2)' : 'rgba(254, 243, 199, 0.5)') : 
-            (isMatch ? 
-              (darkMode ? 'rgba(254, 243, 199, 0.1)' : 'rgba(254, 243, 199, 0.3)') : 
-              'transparent')
+          backgroundColor: isCurrentMatch
+            ? (darkMode ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.2)')
+            : isMatch
+              ? (darkMode ? 'rgba(251, 191, 36, 0.15)' : 'rgba(254, 243, 199, 0.4)')
+              : 'transparent'
         }}
         onMouseEnter={(e) => {
-          if (!isCurrentMatch) {
+          if (!isCurrentMatch && !isMatch) {
             e.currentTarget.style.backgroundColor = darkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(248, 250, 252, 0.8)';
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isCurrentMatch ? 
-            (darkMode ? 'rgba(251, 191, 36, 0.2)' : 'rgba(254, 243, 199, 0.5)') : 
-            (isMatch ? 
-              (darkMode ? 'rgba(254, 243, 199, 0.1)' : 'rgba(254, 243, 199, 0.3)') : 
-              'transparent');
+          e.currentTarget.style.backgroundColor = isCurrentMatch
+            ? (darkMode ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.2)')
+            : isMatch
+              ? (darkMode ? 'rgba(251, 191, 36, 0.15)' : 'rgba(254, 243, 199, 0.4)')
+              : 'transparent';
         }}
       >
         {isObject ? (
@@ -112,7 +107,7 @@ const TreeNode = ({
               color: darkMode ? '#f1f5f9' : '#1e293b' 
             }}>
               {isMatch && matchingResult.matchType === 'key' ? 
-                highlightText(nodeKey, true) : 
+                highlightText(nodeKey) : 
                 nodeKey}:
             </span>
             <span style={{ marginLeft: '8px', fontSize: '14px', color: darkMode ? '#6b7280' : '#6b7280' }}>
@@ -130,17 +125,17 @@ const TreeNode = ({
               color: darkMode ? '#f1f5f9' : '#1e293b' 
             }}>
               {isMatch && matchingResult.matchType === 'key' ? 
-                highlightText(nodeKey, true) : 
+                highlightText(nodeKey) : 
                 nodeKey}:
             </span>
             <span style={{ marginLeft: '8px' }}>
               {isMatch && matchingResult.matchType === 'value' ?
                 <span style={{
-                  backgroundColor: isCurrentMatch ? '#fbbf24' : '#fef3c7',
-                  color: isCurrentMatch ? '#000' : getValueColor(data, darkMode),
+                  backgroundColor: isCurrentMatch ? '#f59e0b' : '#fbbf24',
+                  color: '#000',
                   padding: '2px 4px',
                   borderRadius: '3px',
-                  fontWeight: isCurrentMatch ? '600' : '500'
+                  fontWeight: isCurrentMatch ? '700' : '600'
                 }}>
                   {typeof data === 'string' ? `"${data}"` : String(data)}
                 </span> :

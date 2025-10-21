@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Copy, Check } from 'lucide-react';
 
 const JsonEditor = ({
@@ -12,15 +12,13 @@ const JsonEditor = ({
   searchResults = [],
   currentSearchIndex = -1
 }) => {
-  // Scroll to current search result
+  const highlightLayerRef = useRef(null);
+
+  // Scroll to current search result and update highlights
   useEffect(() => {
     if (searchResults.length > 0 && currentSearchIndex >= 0 && textareaRef.current) {
       const result = searchResults[currentSearchIndex];
       if (result) {
-        // Set selection to highlight the current match
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(result.start, result.end);
-        
         // Calculate the line to scroll to
         const lines = jsonInput.substring(0, result.start).split('\n');
         const lineNumber = lines.length;
@@ -28,9 +26,58 @@ const JsonEditor = ({
         const scrollTop = (lineNumber - 1) * lineHeight - 100; // Offset for better visibility
         
         textareaRef.current.scrollTop = Math.max(0, scrollTop);
+        
+        // Scroll highlight layer to match
+        if (highlightLayerRef.current) {
+          highlightLayerRef.current.scrollTop = textareaRef.current.scrollTop;
+        }
       }
     }
   }, [currentSearchIndex, searchResults, jsonInput, textareaRef]);
+
+  // Sync scroll between textarea and highlight layer
+  const handleScroll = (e) => {
+    if (highlightLayerRef.current) {
+      highlightLayerRef.current.scrollTop = e.target.scrollTop;
+      highlightLayerRef.current.scrollLeft = e.target.scrollLeft;
+    }
+  };
+
+  // Create highlighted content
+  const createHighlightedContent = () => {
+    if (searchResults.length === 0 || !jsonInput) {
+      return jsonInput;
+    }
+
+    let highlighted = '';
+    let lastIndex = 0;
+
+    searchResults.forEach((result, index) => {
+      // Add text before this match
+      highlighted += escapeHtml(jsonInput.substring(lastIndex, result.start));
+      
+      // Add highlighted match
+      const matchText = escapeHtml(jsonInput.substring(result.start, result.end));
+      const isActive = index === currentSearchIndex;
+      highlighted += `<mark class="${isActive ? 'search-highlight-active' : 'search-highlight'}">${matchText}</mark>`;
+      
+      lastIndex = result.end;
+    });
+
+    // Add remaining text
+    highlighted += escapeHtml(jsonInput.substring(lastIndex));
+    
+    return highlighted;
+  };
+
+  const escapeHtml = (text) => {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
 
   return (
     <div style={{
@@ -38,8 +85,11 @@ const JsonEditor = ({
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      minHeight: '500px',
-      height: '100%'
+      minHeight: 0,
+      height: '100%',
+      backgroundColor: darkMode ? '#111827' : '#ffffff',
+      borderRadius: '8px',
+      border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
     }}>
       {/* Error Display */}
       {error && (
@@ -59,14 +109,40 @@ const JsonEditor = ({
       <div style={{
         flex: 1,
         position: 'relative',
-        backgroundColor: darkMode ? '#111827' : '#ffffff',
-        minHeight: '400px',
-        height: '100%'
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column'
       }}>
+        {/* Highlight Layer */}
+        {searchResults.length > 0 && (
+          <div
+            ref={highlightLayerRef}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              padding: '20px',
+              fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
+              fontSize: '14px',
+              lineHeight: '1.6',
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              color: 'transparent',
+              pointerEvents: 'none',
+              overflow: 'auto',
+              zIndex: 1
+            }}
+            dangerouslySetInnerHTML={{ __html: createHighlightedContent() }}
+          />
+        )}
+        
         <textarea
           ref={textareaRef}
           value={jsonInput}
           onChange={onInputChange}
+          onScroll={handleScroll}
           placeholder="Paste your JSON here..."
           style={{
             width: '100%',
@@ -82,7 +158,9 @@ const JsonEditor = ({
             color: darkMode ? '#f3f4f6' : '#111827',
             tabSize: 2,
             boxSizing: 'border-box',
-            overflow: 'auto'
+            overflow: 'auto',
+            position: 'relative',
+            zIndex: 2
           }}
           spellCheck={false}
         />
@@ -95,7 +173,7 @@ const JsonEditor = ({
               position: 'absolute',
               top: '16px',
               right: '16px',
-              padding: '8px',
+              padding: '8px 12px',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -105,14 +183,15 @@ const JsonEditor = ({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: '500',
-              zIndex: 3
+              zIndex: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}
             title={copied ? 'Copied!' : 'Copy to clipboard'}
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
-            {copied ? 'Copied!' : 'Copy'}
+            <span>{copied ? 'Copied!' : 'Copy'}</span>
           </button>
         )}
       </div>

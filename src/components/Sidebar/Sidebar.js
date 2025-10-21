@@ -32,26 +32,59 @@ const Sidebar = ({
   isCollapsed,
   onToggleCollapse
 }) => {
-  const buttonBaseStyle = {
+  // Simplified button style - single consistent style
+  const getButtonStyle = (isDisabled = false, isActive = false, isPrimary = false) => ({
     width: '100%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: isCollapsed ? 'center' : 'flex-start',
     gap: isCollapsed ? '0' : '8px',
-    padding: isCollapsed ? '12px' : '10px 12px',
-    borderRadius: '6px',
+    padding: isCollapsed ? '12px' : '10px 14px',
+    borderRadius: '8px',
     border: 'none',
-    backgroundColor: 'transparent',
+    backgroundColor: isActive 
+      ? (darkMode ? '#374151' : '#e5e7eb')
+      : isPrimary && !isDisabled
+        ? '#10b981'
+        : 'transparent',
+    color: isDisabled
+      ? '#9ca3af'
+      : isPrimary && !isDisabled
+        ? '#ffffff'
+        : isActive
+          ? (darkMode ? '#f3f4f6' : '#111827')
+          : (darkMode ? '#d1d5db' : '#374151'),
     fontSize: '14px',
     fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    textAlign: 'left',
-    minHeight: isCollapsed ? '44px' : 'auto'
+    cursor: isDisabled ? 'not-allowed' : 'pointer',
+    transition: 'all 0.15s ease',
+    opacity: isDisabled ? 0.5 : 1
+  });
+
+  const getButtonClass = (isActive = false, isPrimary = false) => {
+    const baseClass = 'sidebar-button';
+    const classes = [baseClass];
+    if (isActive) classes.push('active');
+    if (isPrimary) classes.push('primary');
+    return classes.join(' ');
   };
 
   return (
-    <div style={{
+    <>
+      <style>
+        {`
+          .sidebar-button:not(:disabled):hover {
+            background-color: ${darkMode ? '#374151' : '#f3f4f6'} !important;
+          }
+          .sidebar-button.primary:not(:disabled):hover {
+            background-color: #059669 !important;
+          }
+          .sidebar-button.active:hover {
+            background-color: ${darkMode ? '#4b5563' : '#d1d5db'} !important;
+          }
+        `}
+      </style>
+      <div style={{
       width: isCollapsed ? '70px' : '260px',
       borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
       backgroundColor: darkMode ? '#1f2937' : '#ffffff',
@@ -94,58 +127,37 @@ const Sidebar = ({
       }}>
         {!isCollapsed && (
           <h3 style={{
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: '600',
-            marginBottom: '12px',
-            margin: '0 0 12px 0',
+            marginBottom: '10px',
             color: darkMode ? '#9ca3af' : '#6b7280',
             textTransform: 'uppercase',
             letterSpacing: '0.05em'
           }}>
-            Core Actions
+            Actions
           </h3>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {/* Format JSON - Primary action */}
           <button
             onClick={formatJson}
             disabled={!jsonInput.trim()}
-            style={{
-              ...buttonBaseStyle,
-              backgroundColor: !jsonInput.trim() ? 'transparent' : '#10b981',
-              color: !jsonInput.trim() ? '#9ca3af' : 'white',
-              cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
-            }}
+            className={getButtonClass(false, true)}
+            style={getButtonStyle(!jsonInput.trim(), false, true)}
             title={isCollapsed ? 'Format JSON' : ''}
-            onMouseEnter={(e) => {
-              if (jsonInput.trim()) {
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
           >
-            <Zap size={isCollapsed ? 20 : 16} />
+            <Zap size={18} />
             {!isCollapsed && <span>Format</span>}
           </button>
           
           {/* Open File */}
           <button
             onClick={openFile}
-            style={{
-              ...buttonBaseStyle,
-              color: darkMode ? '#d1d5db' : '#374151',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className={getButtonClass()}
+            style={getButtonStyle()}
             title={isCollapsed ? 'Open File' : ''}
           >
-            <FolderOpen size={isCollapsed ? 20 : 16} />
+            <FolderOpen size={18} />
             {!isCollapsed && <span>Open</span>}
           </button>
           
@@ -153,26 +165,14 @@ const Sidebar = ({
           <button
             onClick={saveFile}
             disabled={!jsonInput.trim()}
+            className={getButtonClass()}
             style={{
-              ...buttonBaseStyle,
-              color: !jsonInput.trim() 
-                ? '#9ca3af' 
-                : hasUnsavedChanges
-                  ? '#f59e0b'
-                  : (darkMode ? '#d1d5db' : '#374151'),
-              cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+              ...getButtonStyle(!jsonInput.trim()),
+              color: hasUnsavedChanges && jsonInput.trim() ? '#f59e0b' : undefined
             }}
-            onMouseEnter={(e) => {
-              if (jsonInput.trim()) {
-                e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            title={isCollapsed ? (hasUnsavedChanges ? 'Save Changes' : 'Download') : ''}
+            title={isCollapsed ? (hasUnsavedChanges ? 'Save' : 'Download') : ''}
           >
-            {hasUnsavedChanges ? <Save size={isCollapsed ? 20 : 16} /> : <Download size={isCollapsed ? 20 : 16} />}
+            {hasUnsavedChanges ? <Save size={18} /> : <Download size={18} />}
             {!isCollapsed && <span>{hasUnsavedChanges ? 'Save' : 'Download'}</span>}
           </button>
         </div>
@@ -185,117 +185,62 @@ const Sidebar = ({
       }}>
         {!isCollapsed && (
           <h3 style={{
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: '600',
-            marginBottom: '12px',
-            margin: '0 0 12px 0',
+            marginBottom: '10px',
             color: darkMode ? '#9ca3af' : '#6b7280',
             textTransform: 'uppercase',
             letterSpacing: '0.05em'
           }}>
-            View Mode
+            View
           </h3>
         )}
         <div style={{
           display: 'flex',
-          flexDirection: isCollapsed ? 'column' : 'row',
-          borderRadius: '8px',
-          padding: '4px',
-          backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-          gap: isCollapsed ? '6px' : '4px',
-          flexWrap: isCollapsed ? 'nowrap' : 'wrap'
+          flexDirection: 'column',
+          gap: '4px'
         }}>
           <button
             onClick={() => switchViewMode('editor')}
-            style={{
-              flex: isCollapsed ? '1' : '1 1 45%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: isCollapsed ? '0' : '4px',
-              padding: isCollapsed ? '10px 8px' : '6px 8px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: viewMode === 'editor' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
-              color: viewMode === 'editor' ? (darkMode ? '#f3f4f6' : '#111827') : (darkMode ? '#9ca3af' : '#6b7280'),
-              fontSize: '13px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              minHeight: isCollapsed ? '40px' : 'auto'
-            }}
-            title={isCollapsed ? 'Editor View' : ''}
+            className={getButtonClass(viewMode === 'editor')}
+            style={getButtonStyle(false, viewMode === 'editor')}
+            title={isCollapsed ? 'Editor' : ''}
           >
-            <FileText size={isCollapsed ? 18 : 14} />
+            <FileText size={18} />
             {!isCollapsed && <span>Editor</span>}
           </button>
           <button
             onClick={() => switchViewMode('tree')}
             disabled={!jsonInput.trim() || !!error}
-            style={{
-              flex: isCollapsed ? '1' : '1 1 45%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: isCollapsed ? '0' : '4px',
-              padding: isCollapsed ? '10px 8px' : '6px 8px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: viewMode === 'tree' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
-              color: !jsonInput.trim() || !!error 
-                ? '#9ca3af' 
-                : viewMode === 'tree' 
-                  ? (darkMode ? '#f3f4f6' : '#111827') 
-                  : (darkMode ? '#9ca3af' : '#6b7280'),
-              fontSize: '13px',
-              fontWeight: '500',
-              cursor: !jsonInput.trim() || !!error ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              minHeight: isCollapsed ? '40px' : 'auto'
-            }}
-            title={isCollapsed ? 'Tree View' : ''}
+            className={getButtonClass(viewMode === 'tree')}
+            style={getButtonStyle(!jsonInput.trim() || !!error, viewMode === 'tree')}
+            title={isCollapsed ? 'Tree' : ''}
           >
-            <TreePine size={isCollapsed ? 18 : 14} />
+            <TreePine size={18} />
             {!isCollapsed && <span>Tree</span>}
           </button>
           <button
             onClick={() => switchViewMode('compare')}
-            style={{
-              flex: isCollapsed ? '1' : '1 1 100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: isCollapsed ? '0' : '4px',
-              padding: isCollapsed ? '10px 8px' : '6px 8px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: viewMode === 'compare' ? (darkMode ? '#4b5563' : '#ffffff') : 'transparent',
-              color: viewMode === 'compare' ? (darkMode ? '#f3f4f6' : '#111827') : (darkMode ? '#9ca3af' : '#6b7280'),
-              fontSize: '13px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              minHeight: isCollapsed ? '40px' : 'auto'
-            }}
-            title={isCollapsed ? 'Compare View' : ''}
+            className={getButtonClass(viewMode === 'compare')}
+            style={getButtonStyle(false, viewMode === 'compare')}
+            title={isCollapsed ? 'Compare' : ''}
           >
-            <GitCompare size={isCollapsed ? 18 : 14} />
+            <GitCompare size={18} />
             {!isCollapsed && <span>Compare</span>}
           </button>
         </div>
       </div>
 
-      {/* Additional Tools */}
+      {/* Tools */}
       <div style={{
         padding: isCollapsed ? '16px 8px' : '16px',
         borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
       }}>
         {!isCollapsed && (
           <h3 style={{
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: '600',
-            marginBottom: '12px',
-            margin: '0 0 12px 0',
+            marginBottom: '10px',
             color: darkMode ? '#9ca3af' : '#6b7280',
             textTransform: 'uppercase',
             letterSpacing: '0.05em'
@@ -303,91 +248,57 @@ const Sidebar = ({
             Tools
           </h3>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <button
             onClick={minifyJson}
             disabled={!jsonInput.trim()}
-            style={{
-              ...buttonBaseStyle,
-              color: !jsonInput.trim() ? '#9ca3af' : (darkMode ? '#d1d5db' : '#374151'),
-              cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              if (jsonInput.trim()) {
-                e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            title={isCollapsed ? 'Minify JSON' : ''}
+            className={getButtonClass()}
+            style={getButtonStyle(!jsonInput.trim())}
+            title={isCollapsed ? 'Minify' : ''}
           >
-            <Minimize2 size={isCollapsed ? 20 : 16} />
+            <Minimize2 size={18} />
             {!isCollapsed && <span>Minify</span>}
           </button>
           
           <button
             onClick={clearInput}
-            style={{
-              ...buttonBaseStyle,
-              color: darkMode ? '#d1d5db' : '#374151',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            title={isCollapsed ? 'Clear All' : ''}
+            className={getButtonClass()}
+            style={getButtonStyle()}
+            title={isCollapsed ? 'Clear' : ''}
           >
-            <RotateCcw size={isCollapsed ? 20 : 16} />
+            <RotateCcw size={18} />
             {!isCollapsed && <span>Clear</span>}
           </button>
           
           <button
             onClick={loadSample}
-            style={{
-              ...buttonBaseStyle,
-              color: darkMode ? '#d1d5db' : '#374151',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            title={isCollapsed ? 'Load Sample' : ''}
+            className={getButtonClass()}
+            style={getButtonStyle()}
+            title={isCollapsed ? 'Sample' : ''}
           >
-            <Upload size={isCollapsed ? 20 : 16} />
+            <Upload size={18} />
             {!isCollapsed && <span>Sample</span>}
           </button>
         </div>
       </div>
 
-      {/* Settings at bottom */}
+      {/* Settings */}
       <div style={{
         marginTop: 'auto',
         padding: isCollapsed ? '16px 8px' : '16px'
       }}>
         <button
           onClick={() => setShowSettings(true)}
-          style={{
-            ...buttonBaseStyle,
-            color: darkMode ? '#d1d5db' : '#374151',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+          className={getButtonClass()}
+          style={getButtonStyle()}
           title={isCollapsed ? 'Settings' : ''}
         >
-          <Settings size={isCollapsed ? 20 : 16} />
+          <Settings size={18} />
           {!isCollapsed && <span>Settings</span>}
         </button>
       </div>
     </div>
+    </>
   );
 };
 

@@ -1,39 +1,31 @@
-import React, { useState, useRef, useCallback } from 'react';
-import {
-  JsonEditor,
-  TreeView,
-  SettingsModal,
-  KeyboardHelpModal,
-  ShareModal,
-  AutoFixSuggestions,
-  CompareView
-} from './components';
-import SimplifiedHeader from './components/Header/SimplifiedHeader';
-import SearchBar from './components/SearchBar/SearchBar';
+import React, { useState, useRef } from 'react';
 import { useTheme } from './hooks/useTheme';
 import { useFileOperations } from './hooks/useFileOperations';
 import { useSearch } from './hooks/useSearch';
 import { useTreeView } from './hooks/useTreeView';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { validateJson, formatJson, minifyJson } from './utils/jsonUtils';
 import { analyzeJsonErrors, applySingleFix, applyAllFixes } from './utils/jsonAutoFix';
 import { trackEvent } from './utils/analytics';
-import { VIEW_MODES, DEFAULT_SETTINGS, SAMPLE_JSON } from './constants';
+import { SAMPLE_JSON, DEFAULT_SETTINGS, VIEW_MODES } from './constants';
+import SimplifiedHeader from './components/SimplifiedHeader/SimplifiedHeader';
+import SimplifiedEditor from './components/SimplifiedEditor/SimplifiedEditor';
+import SimplifiedToolbar from './components/SimplifiedToolbar/SimplifiedToolbar';
+import SimplifiedSearchBar from './components/SimplifiedSearchBar/SimplifiedSearchBar';
+import SimplifiedTreeView from './components/SimplifiedTreeView/SimplifiedTreeView';
+import CompareView from './components/CompareView';
 
-const JsonFormatter = () => {
+const SimplifiedJsonFormatter = () => {
   // State management
   const [jsonInput, setJsonInput] = useState('');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [indentSize, setIndentSize] = useState(DEFAULT_SETTINGS.INDENT_SIZE);
   const [viewMode, setViewMode] = useState(VIEW_MODES.EDITOR);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [autoFixSuggestions, setAutoFixSuggestions] = useState([]);
   const [showAutoFix, setShowAutoFix] = useState(false);
-  
+  const [showSettings, setShowSettings] = useState(false);
+
   // Refs
   const textareaRef = useRef(null);
 
@@ -51,9 +43,7 @@ const JsonFormatter = () => {
     navigateSearch,
     handleSearchChange,
     clearSearch,
-    toggleSearch,
-    setSearchResults,
-    setCurrentSearchIndex
+    toggleSearch
   } = useSearch();
 
   const {
@@ -74,8 +64,7 @@ const JsonFormatter = () => {
   });
 
   // Event handlers
-  const handleInputChange = (e) => {
-    const value = e.target.value;
+  const handleInputChange = (value) => {
     setJsonInput(value);
     
     const validation = validateJson(value);
@@ -159,11 +148,6 @@ const JsonFormatter = () => {
     }
   };
 
-  const switchViewMode = (mode) => {
-    setViewMode(mode);
-    trackEvent(`switch_to_${mode}`);
-  };
-
   const loadSample = () => {
     const sampleText = JSON.stringify(SAMPLE_JSON, null, indentSize);
     setJsonInput(sampleText);
@@ -175,40 +159,15 @@ const JsonFormatter = () => {
     trackEvent('load_sample');
   };
 
-  const handleExpandAll = () => {
-    expandAll(jsonInput);
-    trackEvent('expand_all');
+  const handleSearchChangeWrapper = (e) => {
+    handleSearchChange(e, jsonInput);
   };
 
-  const handleCollapseAll = () => {
-    collapseAll();
-    trackEvent('collapse_all');
-  };
-
-  // Keyboard shortcuts integration
-  const { shortcuts } = useKeyboardShortcuts({
-    formatJson: handleFormatJson,
-    minifyJson: handleMinifyJson,
-    toggleSearch: () => {
-      // Focus the search input when Ctrl+K is pressed
-      const searchInput = document.querySelector('.search-input');
-      if (searchInput) searchInput.focus();
-    },
-    toggleTheme,
-    clearInput: handleClearInput,
-    loadSample,
-    toggleView: () => switchViewMode(viewMode === VIEW_MODES.EDITOR ? VIEW_MODES.TREE : VIEW_MODES.EDITOR),
-    copyToClipboard,
-    openSettings: () => setShowSettings(true)
-  });
-
-  // Auto-fix handlers
   const handleApplyFix = (fix) => {
     const fixedJson = applySingleFix(jsonInput, fix.type);
     setJsonInput(fixedJson);
     checkUnsavedChanges(fixedJson);
     
-    // Re-analyze for remaining issues
     const validation = validateJson(fixedJson);
     if (!validation.isValid) {
       const analysis = analyzeJsonErrors(fixedJson);
@@ -240,22 +199,6 @@ const JsonFormatter = () => {
     trackEvent('apply_all_fixes', { fixCount: autoFixSuggestions.length });
   };
 
-  const handleDismissAutoFix = () => {
-    setShowAutoFix(false);
-  };
-
-  const handleSearchChangeWrapper = (e) => {
-    handleSearchChange(e, jsonInput);
-  };
-
-  const handleTreeSearchResultsUpdate = useCallback((results) => {
-    // When tree view performs search, update the global search results
-    setSearchResults(results);
-    if (results.length > 0 && currentSearchIndex >= results.length) {
-      setCurrentSearchIndex(0);
-    }
-  }, [currentSearchIndex, setSearchResults, setCurrentSearchIndex]);
-
   // Show compare view
   if (viewMode === 'compare') {
     return (
@@ -268,94 +211,96 @@ const JsonFormatter = () => {
 
   return (
     <div style={{
-      backgroundColor: darkMode ? '#111827' : '#f9fafb',
-      color: darkMode ? '#f3f4f6' : '#111827',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
+      backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+      color: darkMode ? '#e2e8f0' : '#1e293b',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       overflow: 'hidden'
     }}>
-      {/* Simplified Header - Focus on Editor/Tree */}
+      {/* Minimal Header */}
       <SimplifiedHeader
         darkMode={darkMode}
-        toggleTheme={toggleTheme}
         currentFileName={currentFileName}
         hasUnsavedChanges={hasUnsavedChanges}
-        openFile={openFile}
-        saveFile={saveFile}
+        onOpenFile={openFile}
+        onSaveFile={saveFile}
         jsonInput={jsonInput}
-        error={error}
-        viewMode={viewMode}
-        switchViewMode={switchViewMode}
-        setShowSettings={setShowSettings}
-        clearInput={handleClearInput}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChangeWrapper}
-        searchResults={searchResults}
-        currentSearchIndex={currentSearchIndex}
-        navigateSearch={navigateSearch}
+        toggleTheme={toggleTheme}
+        onShowSettings={() => setShowSettings(true)}
       />
 
-      {/* Auto-Fix Suggestions */}
-      {showAutoFix && (
-        <AutoFixSuggestions
-          fixes={autoFixSuggestions}
-          onApplyFix={handleApplyFix}
-          onApplyAllFixes={handleApplyAllFixes}
-          onDismiss={handleDismissAutoFix}
-          darkMode={darkMode}
-        />
-      )}
-
-      {/* Main Content Area - Full Width and Full Height */}
-      <div style={{ 
+      {/* Main Content Area */}
+      <div style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        padding: '0 24px',
-        paddingTop: '16px',
-        paddingBottom: '16px',
-        minHeight: 0,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative'
       }}>
-        {/* JSON Editor/Tree View */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          overflow: 'hidden'
-        }}>
-          {viewMode === VIEW_MODES.EDITOR ? (
-            <JsonEditor
-              jsonInput={jsonInput}
-              error={error}
-              darkMode={darkMode}
-              copied={copied}
-              textareaRef={textareaRef}
-              onInputChange={handleInputChange}
-              onCopyToClipboard={copyToClipboard}
-              searchResults={searchResults}
-              currentSearchIndex={currentSearchIndex}
-            />
-          ) : (
-            <TreeView
-              jsonInput={jsonInput}
-              error={error}
-              darkMode={darkMode}
-              copied={copied}
-              expandedNodes={expandedNodes}
-              onToggleNode={toggleNode}
-              onCopyToClipboard={copyToClipboard}
-              searchQuery={searchQuery}
-              searchResults={searchResults}
-              currentSearchIndex={currentSearchIndex}
-              onSearchResultsUpdate={handleTreeSearchResultsUpdate}
-            />
-          )}
-        </div>
+        {/* Editor or Tree View */}
+        {viewMode === VIEW_MODES.EDITOR ? (
+          <SimplifiedEditor
+            jsonInput={jsonInput}
+            error={error}
+            darkMode={darkMode}
+            textareaRef={textareaRef}
+            onInputChange={handleInputChange}
+            searchResults={searchResults}
+            currentSearchIndex={currentSearchIndex}
+            showAutoFix={showAutoFix}
+            autoFixSuggestions={autoFixSuggestions}
+            onApplyFix={handleApplyFix}
+            onApplyAllFixes={handleApplyAllFixes}
+            onDismissAutoFix={() => setShowAutoFix(false)}
+          />
+        ) : (
+          <SimplifiedTreeView
+            jsonInput={jsonInput}
+            error={error}
+            darkMode={darkMode}
+            expandedNodes={expandedNodes}
+            onToggleNode={toggleNode}
+            onExpandAll={() => expandAll(jsonInput)}
+            onCollapseAll={collapseAll}
+            searchQuery={searchQuery}
+            searchResults={searchResults}
+            currentSearchIndex={currentSearchIndex}
+          />
+        )}
       </div>
+
+      {/* Bottom Toolbar */}
+      <SimplifiedToolbar
+        darkMode={darkMode}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        jsonInput={jsonInput}
+        error={error}
+        formatJson={handleFormatJson}
+        minifyJson={handleMinifyJson}
+        clearInput={handleClearInput}
+        copyToClipboard={copyToClipboard}
+        loadSample={loadSample}
+        copied={copied}
+        indentSize={indentSize}
+        setIndentSize={setIndentSize}
+      />
+
+      {/* Bottom Search Bar */}
+      <SimplifiedSearchBar
+        darkMode={darkMode}
+        showSearch={showSearch}
+        searchQuery={searchQuery}
+        searchResults={searchResults}
+        currentSearchIndex={currentSearchIndex}
+        onSearchChange={handleSearchChangeWrapper}
+        onNavigateSearch={navigateSearch}
+        onClearSearch={clearSearch}
+        onToggleSearch={toggleSearch}
+        jsonInput={jsonInput}
+      />
 
       {/* Hidden File Input */}
       <input
@@ -366,38 +311,59 @@ const JsonFormatter = () => {
         style={{ display: 'none' }}
       />
 
-      {/* Modals */}
-      <SettingsModal
-        showSettings={showSettings}
-        onClose={() => setShowSettings(false)}
-        darkMode={darkMode}
-        indentSize={indentSize}
-        setIndentSize={setIndentSize}
-        loadSample={loadSample}
-        formatJson={handleFormatJson}
-        minifyJson={handleMinifyJson}
-        jsonInput={jsonInput}
-        error={error}
-        switchViewMode={switchViewMode}
-        onShowShareModal={() => setShowShareModal(true)}
-        onShowKeyboardHelp={() => setShowKeyboardHelp(true)}
-      />
-
-      <KeyboardHelpModal
-        isOpen={showKeyboardHelp}
-        onClose={() => setShowKeyboardHelp(false)}
-        shortcuts={shortcuts}
-        darkMode={darkMode}
-      />
-
-      <ShareModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        jsonContent={jsonInput}
-        darkMode={darkMode}
-      />
+      {/* Settings Modal */}
+      {showSettings && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: darkMode ? '#1e293b' : '#ffffff',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0' }}>Settings</h3>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px' }}>
+                Indent Size: {indentSize}
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="8"
+                value={indentSize}
+                onChange={(e) => setIndentSize(Number(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <button
+              onClick={() => setShowSettings(false)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default JsonFormatter;
+export default SimplifiedJsonFormatter;

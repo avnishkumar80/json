@@ -17,6 +17,11 @@ export const useKeyboardShortcuts = ({
 }) => {
   
   const handleKeyDown = useCallback((e) => {
+    // Don't handle shortcuts in search input
+    if (e.target.classList.contains('search-input')) {
+      return;
+    }
+    
     // Only handle shortcuts when not in input fields (except search)
     const isInputField = ['INPUT', 'TEXTAREA'].includes(e.target.tagName);
     const isJsonEditor = e.target.classList.contains('json-input') || 

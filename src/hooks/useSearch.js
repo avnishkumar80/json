@@ -62,6 +62,8 @@ export const useSearch = () => {
     navigateSearch,
     handleSearchChange,
     clearSearch,
-    toggleSearch
+    toggleSearch,
+    setSearchResults,
+    setCurrentSearchIndex
   };
 };
