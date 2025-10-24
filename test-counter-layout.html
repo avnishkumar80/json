@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Counter Layout Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f9fafb;
+    }
+    
+    .header {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    
+    .center-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      justify-content: center;
+      min-width: 500px;
+      overflow: visible;
+    }
+    
+    .view-buttons {
+      display: flex;
+      gap: 8px;
+      padding: 4px;
+      background: #e5e7eb;
+      border-radius: 10px;
+    }
+    
+    .view-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #10b981;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .search-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 280px;
+      max-width: 380px;
+      flex-shrink: 0;
+      overflow: visible;
+    }
+    
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      font-size: 14px;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6b7280;
+    }
+    
+    .counter-section {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    
+    .counter-badge {
+      font-size: 13px;
+      color: #6b7280;
+      white-space: nowrap;
+      font-weight: 600;
+      padding: 4px 8px;
+      background: #f3f4f6;
+      border-radius: 6px;
+      min-width: fit-content;
+    }
+    
+    .arrow-btn {
+      padding: 6px 8px;
+      border: none;
+      border-radius: 8px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      line-height: 1;
+    }
+    
+    .arrow-btn:hover {
+      background: #e5e7eb;
+    }
+    
+    .right-actions {
+      display: flex;
+      gap: 6px;
+    }
+    
+    .action-btn {
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: #f3f4f6;
+      color: #374151;
+      cursor: pointer;
+    }
+    
+    .debug-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 8px;
+    }
+    
+    .success {
+      color: #10b981;
+      font-weight: bold;
+    }
+    
+    .error {
+      color: #ef4444;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Search Counter Layout Test</h1>
+  
+  <div class="header">
+    <div class="header-content">
+      <!-- Left: Brand -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 8px;"></div>
+        <div>
+          <h2 style="margin: 0; font-size: 18px;">GuidedJSON</h2>
+        </div>
+      </div>
+      
+      <!-- Center: View Buttons + Search -->
+      <div class="center-section">
+        <div class="view-buttons">
+          <button class="view-btn">Editor</button>
+          <button class="view-btn">Tree</button>
+        </div>
+        
+        <div class="search-container">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Search keys and values..." value="test">
+          </div>
+          
+          <!-- THIS IS THE COUNTER SECTION THAT SHOULD ALWAYS BE VISIBLE -->
+          <div class="counter-section">
+            <span class="counter-badge">1/5</span>
+            <button class="arrow-btn">↑</button>
+            <button class="arrow-btn">↓</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right: Actions -->
+      <div class="right-actions">
+        <button class="action-btn">📂</button>
+        <button class="action-btn">💾</button>
+        <button class="action-btn">⚙️</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="debug-info">
+    <h3>Layout Test Results:</h3>
+    <ul id="test-results"></ul>
+    <button onclick="runTests()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 10px;">
+      Run Tests
+    </button>
+  </div>
+  
+  <script>
+    function runTests() {
+      const results = document.getElementById('test-results');
+      results.innerHTML = '';
+      
+      const tests = [
+        {
+          name: 'Counter badge exists',
+          test: () => document.querySelector('.counter-badge') !== null
+        },
+        {
+          name: 'Counter badge is visible',
+          test: () => {
+            const badge = document.querySelector('.counter-badge');
+            const rect = badge?.getBoundingClientRect();
+            return rect && rect.width > 0 && rect.height > 0;
+          }
+        },
+        {
+          name: 'Counter badge has correct text',
+          test: () => document.querySelector('.counter-badge')?.textContent === '1/5'
+        },
+        {
+          name: 'Arrow buttons exist',
+          test: () => document.querySelectorAll('.arrow-btn').length === 2
+        },
+        {
+          name: 'Arrow buttons are visible',
+          test: () => {
+            const buttons = document.querySelectorAll('.arrow-btn');
+            return Array.from(buttons).every(btn => {
+              const rect = btn.getBoundingClientRect();
+              return rect.width > 0 && rect.height > 0;
+            });
+          }
+        },
+        {
+          name: 'Counter section not overflowing',
+          test: () => {
+            const section = document.querySelector('.counter-section');
+            const parent = section?.parentElement;
+            const sectionRight = section?.getBoundingClientRect().right;
+            const parentRight = parent?.getBoundingClientRect().right;
+            return sectionRight && parentRight && sectionRight <= parentRight + 5; // 5px tolerance
+          }
+        },
+        {
+          name: 'Center section has enough width',
+          test: () => {
+            const center = document.querySelector('.center-section');
+            return center?.offsetWidth >= 500;
+          }
+        },
+        {
+          name: 'No horizontal scrollbar',
+          test: () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+        }
+      ];
+      
+      let passed = 0;
+      let failed = 0;
+      
+      tests.forEach(({ name, test }) => {
+        const result = document.createElement('li');
+        try {
+          const success = test();
+          if (success) {
+            result.innerHTML = `<span class="success">✓</span> ${name}`;
+            passed++;
+          } else {
+            result.innerHTML = `<span class="error">✗</span> ${name}`;
+            failed++;
+          }
+        } catch (error) {
+          result.innerHTML = `<span class="error">✗</span> ${name} - Error: ${error.message}`;
+          failed++;
+        }
+        results.appendChild(result);
+      });
+      
+      const summary = document.createElement('li');
+      summary.style.marginTop = '10px';
+      summary.style.fontWeight = 'bold';
+      summary.innerHTML = `<br>Summary: ${passed} passed, ${failed} failed`;
+      results.appendChild(summary);
+      
+      if (failed === 0) {
+        const success = document.createElement('div');
+        success.style.marginTop = '15px';
+        success.style.padding = '10px';
+        success.style.background = '#d1fae5';
+        success.style.border = '2px solid #10b981';
+        success.style.borderRadius = '6px';
+        success.style.fontWeight = 'bold';
+        success.style.color = '#065f46';
+        success.textContent = '✓ All tests passed! Layout is correct.';
+        results.appendChild(success);
+      }
+    }
+    
+    // Run tests on load
+    window.addEventListener('load', runTests);
+  </script>
+</body>
+</html>

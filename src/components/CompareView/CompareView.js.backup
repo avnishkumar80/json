@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Copy, Check, GitCompare, X, Upload, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Copy, Check, GitCompare, X } from 'lucide-react';
 import * as Diff from 'diff';
 
 const CompareView = ({
@@ -11,16 +11,11 @@ const CompareView = ({
   const [leftError, setLeftError] = useState('');
   const [rightError, setRightError] = useState('');
   const [copied, setCopied] = useState(null);
-  const [currentDiffIndex, setCurrentDiffIndex] = useState(0);
-  const leftFileInputRef = useRef(null);
-  const rightFileInputRef = useRef(null);
-  const leftScrollRef = useRef(null);
-  const rightScrollRef = useRef(null);
 
   // Parse and compare JSON
   const comparison = useMemo(() => {
     if (!leftJson.trim() || !rightJson.trim()) {
-      return { differences: [], identical: false, leftFormatted: '', rightFormatted: '', lineDiffs: [], changedLines: 0, diffBlocks: [] };
+      return { differences: [], identical: false, leftFormatted: '', rightFormatted: '', charDiffs: [] };
     }
 
     try {
@@ -32,45 +27,18 @@ const CompareView = ({
       const rightFormatted = JSON.stringify(rightParsed, null, 2);
       
       const diffs = findDifferences(leftParsed, rightParsed);
-      const lineDiffs = Diff.diffLines(leftFormatted, rightFormatted);
+      const charDiffs = Diff.diffWords(leftFormatted, rightFormatted);
       const identical = diffs.length === 0 && leftFormatted === rightFormatted;
-      
-      // Build diff blocks with line numbers
-      const diffBlocks = [];
-      let lineNumber = 0;
-      
-      lineDiffs.forEach((part) => {
-        const lines = part.value.split('\n');
-        if (lines[lines.length - 1] === '') {
-          lines.pop();
-        }
-        
-        if (part.added || part.removed) {
-          diffBlocks.push({
-            startLine: lineNumber,
-            endLine: lineNumber + lines.length - 1,
-            type: part.added ? 'added' : 'removed',
-            lineCount: lines.length
-          });
-        }
-        
-        lineNumber += lines.length;
-      });
-      
-      // Count total changed lines
-      const changedLines = diffBlocks.reduce((sum, block) => sum + block.lineCount, 0);
       
       return { 
         differences: diffs, 
         identical,
         leftFormatted,
         rightFormatted,
-        lineDiffs,
-        changedLines,
-        diffBlocks
+        charDiffs
       };
     } catch (e) {
-      return { differences: [], identical: false, error: true, lineDiffs: [], changedLines: 0, diffBlocks: [] };
+      return { differences: [], identical: false, error: true, charDiffs: [] };
     }
   }, [leftJson, rightJson]);
 
@@ -90,7 +58,6 @@ const CompareView = ({
     }
   };
 
-
   const handleRightChange = (e) => {
     const value = e.target.value;
     setRightJson(value);
@@ -105,35 +72,6 @@ const CompareView = ({
     } else {
       setRightError('');
     }
-  };
-
-  const handleFileUpload = (e, side) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target.result;
-      if (side === 'left') {
-        setLeftJson(content);
-        try {
-          JSON.parse(content);
-          setLeftError('');
-        } catch (err) {
-          setLeftError(err.message);
-        }
-      } else {
-        setRightJson(content);
-        try {
-          JSON.parse(content);
-          setRightError('');
-        } catch (err) {
-          setRightError(err.message);
-        }
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
   };
 
   const copyToClipboard = async (text, side) => {
@@ -170,43 +108,6 @@ const CompareView = ({
     setRightError(tempError);
   };
 
-  const handleNewCompare = () => {
-    setLeftJson('');
-    setRightJson('');
-    setLeftError('');
-    setRightError('');
-    setCopied(null);
-    setCurrentDiffIndex(0);
-  };
-
-  useEffect(() => {
-    setCurrentDiffIndex(0);
-  }, [comparison.diffBlocks.length]);
-
-  const navigateToDiff = (index) => {
-    if (index < 0 || index >= comparison.diffBlocks.length) return;
-    setCurrentDiffIndex(index);
-    const block = comparison.diffBlocks[index];
-    if (leftScrollRef.current && rightScrollRef.current) {
-      const lineHeight = 20.8;
-      const scrollPosition = block.startLine * lineHeight;
-      leftScrollRef.current.scrollTop = scrollPosition;
-      rightScrollRef.current.scrollTop = scrollPosition;
-    }
-  };
-
-  const goToPreviousDiff = () => {
-    if (currentDiffIndex > 0) {
-      navigateToDiff(currentDiffIndex - 1);
-    }
-  };
-
-  const goToNextDiff = () => {
-    if (currentDiffIndex < comparison.diffBlocks.length - 1) {
-      navigateToDiff(currentDiffIndex + 1);
-    }
-  };
-
   return (
     <div style={{
       position: 'fixed',
@@ -219,6 +120,7 @@ const CompareView = ({
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -240,101 +142,25 @@ const CompareView = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {leftJson.trim() && rightJson.trim() && !leftError && !rightError && !comparison.identical && comparison.diffBlocks.length > 0 && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-              color: darkMode ? '#d1d5db' : '#374151',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              <button
-                onClick={goToPreviousDiff}
-                disabled={currentDiffIndex === 0}
-                style={{
-                  padding: '4px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: currentDiffIndex === 0 ? 'not-allowed' : 'pointer',
-                  backgroundColor: 'transparent',
-                  color: 'inherit',
-                  display: 'flex',
-                  alignItems: 'center',
-                  opacity: currentDiffIndex === 0 ? 0.5 : 1,
-                  transition: 'opacity 0.2s'
-                }}
-                title="Previous difference"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              
-              <span style={{ userSelect: 'none', minWidth: '60px', textAlign: 'center' }}>
-                {currentDiffIndex + 1} of {comparison.diffBlocks.length}
-              </span>
-              
-              <button
-                onClick={goToNextDiff}
-                disabled={currentDiffIndex === comparison.diffBlocks.length - 1}
-                style={{
-                  padding: '4px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: currentDiffIndex === comparison.diffBlocks.length - 1 ? 'not-allowed' : 'pointer',
-                  backgroundColor: 'transparent',
-                  color: 'inherit',
-                  display: 'flex',
-                  alignItems: 'center',
-                  opacity: currentDiffIndex === comparison.diffBlocks.length - 1 ? 0.5 : 1,
-                  transition: 'opacity 0.2s'
-                }}
-                title="Next difference"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
-          
-          {leftJson.trim() && rightJson.trim() && !leftError && !rightError && comparison.identical && (
+          {/* Comparison Status */}
+          {leftJson.trim() && rightJson.trim() && !leftError && !rightError && (
             <div style={{
               padding: '6px 12px',
               borderRadius: '6px',
               fontSize: '14px',
               fontWeight: '500',
-              backgroundColor: darkMode ? '#064e3b' : '#d1fae5',
-              color: darkMode ? '#6ee7b7' : '#047857'
+              backgroundColor: comparison.identical 
+                ? (darkMode ? '#064e3b' : '#d1fae5')
+                : (darkMode ? '#7c2d12' : '#fed7aa'),
+              color: comparison.identical
+                ? (darkMode ? '#6ee7b7' : '#047857')
+                : (darkMode ? '#fdba74' : '#c2410c')
             }}>
-              ✓ Identical
+              {comparison.identical ? '✓ Identical' : `${comparison.differences.length} Difference${comparison.differences.length !== 1 ? 's' : ''}`}
             </div>
           )}
 
-          <button
-            onClick={handleNewCompare}
-            disabled={!leftJson.trim() && !rightJson.trim()}
-            style={{
-              padding: '8px 12px',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: !leftJson.trim() && !rightJson.trim() ? 'not-allowed' : 'pointer',
-              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-              color: darkMode ? '#d1d5db' : '#374151',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              opacity: !leftJson.trim() && !rightJson.trim() ? 0.5 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-            title="Start a new comparison"
-          >
-            <RefreshCw size={16} />
-            New Compare
-          </button>
-
+          {/* Swap Button */}
           <button
             onClick={swapSides}
             disabled={!leftJson.trim() && !rightJson.trim()}
@@ -355,6 +181,7 @@ const CompareView = ({
             ⇄ Swap
           </button>
 
+          {/* Close Button */}
           <button
             onClick={onClose}
             style={{
@@ -375,6 +202,7 @@ const CompareView = ({
         </div>
       </div>
 
+      {/* Comparison Content */}
       <div style={{
         flex: 1,
         display: 'grid',
@@ -382,6 +210,7 @@ const CompareView = ({
         overflow: 'hidden',
         minHeight: 0
       }}>
+        {/* Left Panel */}
         <DiffPanel
           json={leftJson}
           formattedJson={comparison.leftFormatted}
@@ -390,18 +219,13 @@ const CompareView = ({
           label="Original"
           darkMode={darkMode}
           copied={copied === 'left'}
-          lineDiffs={comparison.lineDiffs}
-          diffBlocks={comparison.diffBlocks}
-          currentDiffIndex={currentDiffIndex}
+          charDiffs={comparison.charDiffs}
           onJsonChange={handleLeftChange}
           onFormat={() => formatJson(leftJson, 'left')}
           onCopy={() => copyToClipboard(leftJson, 'left')}
-          onFileUpload={(e) => handleFileUpload(e, 'left')}
-          fileInputRef={leftFileInputRef}
-          scrollRef={leftScrollRef}
-          otherScrollRef={rightScrollRef}
         />
 
+        {/* Right Panel */}
         <DiffPanel
           json={rightJson}
           formattedJson={comparison.rightFormatted}
@@ -410,22 +234,17 @@ const CompareView = ({
           label="Modified"
           darkMode={darkMode}
           copied={copied === 'right'}
-          lineDiffs={comparison.lineDiffs}
-          diffBlocks={comparison.diffBlocks}
-          currentDiffIndex={currentDiffIndex}
+          charDiffs={comparison.charDiffs}
           onJsonChange={handleRightChange}
           onFormat={() => formatJson(rightJson, 'right')}
           onCopy={() => copyToClipboard(rightJson, 'right')}
-          onFileUpload={(e) => handleFileUpload(e, 'right')}
-          fileInputRef={rightFileInputRef}
-          scrollRef={rightScrollRef}
-          otherScrollRef={leftScrollRef}
         />
       </div>
     </div>
   );
 };
 
+// Diff Panel Component with inline character-level highlighting
 const DiffPanel = ({
   json,
   formattedJson,
@@ -434,77 +253,73 @@ const DiffPanel = ({
   label,
   darkMode,
   copied,
-  lineDiffs,
-  diffBlocks,
-  currentDiffIndex,
+  charDiffs,
   onJsonChange,
   onFormat,
-  onCopy,
-  onFileUpload,
-  fileInputRef,
-  scrollRef,
-  otherScrollRef
+  onCopy
 }) => {
   const lines = (formattedJson || json).split('\n');
   const maxLineNumber = lines.length;
   const lineNumberWidth = Math.max(String(maxLineNumber).length * 8 + 16, 50);
 
-  // Handle synchronized scrolling with debounce to prevent infinite loops
-  const handleScroll = (e) => {
-    if (otherScrollRef.current) {
-      // Use requestAnimationFrame to sync smoothly
-      requestAnimationFrame(() => {
-        if (otherScrollRef.current) {
-          otherScrollRef.current.scrollTop = e.target.scrollTop;
-          otherScrollRef.current.scrollLeft = e.target.scrollLeft;
-        }
-      });
-    }
-  };
-
+  // Render content with inline diff highlighting
   const renderDiffContent = () => {
-    if (!formattedJson || lineDiffs.length === 0) {
+    if (!formattedJson || charDiffs.length === 0) {
       return null;
     }
 
+    let lineNumber = 1;
     const renderedLines = [];
-    let lineIndex = 0;
-    
-    lineDiffs.forEach((part) => {
+    let currentLine = [];
+    let charIndex = 0;
+
+    charDiffs.forEach((part, partIndex) => {
+      const text = part.value;
       const isAdded = part.added;
       const isRemoved = part.removed;
-      
+      const isUnchanged = !isAdded && !isRemoved;
+
+      // Show removed parts only on left side, added only on right side
       if ((side === 'left' && isAdded) || (side === 'right' && isRemoved)) {
-        return;
+        return; // Skip this part for this side
       }
+
+      const chars = text.split('');
       
-      const lineArray = part.value.split('\n');
-      if (lineArray[lineArray.length - 1] === '') {
-        lineArray.pop();
-      }
-      
-      lineArray.forEach((line) => {
-        renderedLines.push({
-          content: line,
-          isHighlighted: (side === 'left' && isRemoved) || (side === 'right' && isAdded),
-          type: isRemoved ? 'removed' : isAdded ? 'added' : 'unchanged',
-          lineNumber: lineIndex
-        });
-        lineIndex++;
+      chars.forEach((char, charIdx) => {
+        if (char === '\n') {
+          // End of line - push current line
+          renderedLines.push({
+            lineNumber: lineNumber,
+            content: currentLine,
+            hasChanges: currentLine.some(c => c.isHighlighted)
+          });
+          lineNumber++;
+          currentLine = [];
+        } else {
+          currentLine.push({
+            char: char,
+            isHighlighted: (side === 'left' && isRemoved) || (side === 'right' && isAdded),
+            type: isRemoved ? 'removed' : isAdded ? 'added' : 'unchanged'
+          });
+        }
+        charIndex++;
       });
     });
+
+    // Push last line if exists
+    if (currentLine.length > 0) {
+      renderedLines.push({
+        lineNumber: lineNumber,
+        content: currentLine,
+        hasChanges: currentLine.some(c => c.isHighlighted)
+      });
+    }
 
     return renderedLines;
   };
 
   const diffLines = renderDiffContent();
-  
-  const isInCurrentDiffBlock = (lineNum) => {
-    if (!diffBlocks || diffBlocks.length === 0 || currentDiffIndex < 0) return false;
-    const currentBlock = diffBlocks[currentDiffIndex];
-    if (!currentBlock) return false;
-    return lineNum >= currentBlock.startLine && lineNum <= currentBlock.endLine;
-  };
 
   return (
     <div style={{
@@ -516,6 +331,7 @@ const DiffPanel = ({
       minHeight: 0,
       overflow: 'hidden'
     }}>
+      {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -532,32 +348,6 @@ const DiffPanel = ({
           {label}
         </span>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              padding: '4px 8px',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-              color: darkMode ? '#d1d5db' : '#374151',
-              fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-            title="Load JSON from file"
-          >
-            <Upload size={12} />
-            Load
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            onChange={onFileUpload}
-            style={{ display: 'none' }}
-          />
           <button
             onClick={onFormat}
             disabled={!json.trim() || !!error}
@@ -596,6 +386,7 @@ const DiffPanel = ({
         </div>
       </div>
 
+      {/* Error */}
       {error && (
         <div style={{
           backgroundColor: darkMode ? '#7f1d1d' : '#fef2f2',
@@ -608,18 +399,15 @@ const DiffPanel = ({
         </div>
       )}
 
-      <div 
-        ref={scrollRef}
-        onScroll={handleScroll}
-        style={{
-          flex: 1,
-          display: 'flex',
-          overflow: 'auto',
-          position: 'relative',
-          backgroundColor: darkMode ? '#111827' : '#ffffff',
-          minHeight: 0
-        }}
-      >
+      {/* Editor with inline highlighting */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        position: 'relative',
+        backgroundColor: darkMode ? '#111827' : '#ffffff',
+        minHeight: 0
+      }}>
         {diffLines ? (
           <>
             {/* Line numbers */}
@@ -627,6 +415,7 @@ const DiffPanel = ({
               width: `${lineNumberWidth}px`,
               backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
               borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+              padding: '16px 0',
               fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
               fontSize: '13px',
               lineHeight: '1.6',
@@ -634,38 +423,25 @@ const DiffPanel = ({
               textAlign: 'right',
               userSelect: 'none',
               flexShrink: 0,
-              overflow: 'hidden'
+              overflowY: 'hidden'
             }}>
-              <div style={{ padding: '16px 0' }}>
-                {diffLines.map((line, index) => {
-                  const isCurrentDiff = isInCurrentDiffBlock(line.lineNumber);
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        padding: '0 8px',
-                        minHeight: '20.8px',
-                        backgroundColor: isCurrentDiff && line.isHighlighted
-                          ? (side === 'left' 
-                              ? (darkMode ? 'rgba(220, 38, 38, 0.35)' : 'rgba(254, 226, 226, 0.9)')
-                              : (darkMode ? 'rgba(5, 150, 105, 0.35)' : 'rgba(167, 243, 208, 0.9)'))
-                          : line.isHighlighted 
-                            ? (side === 'left' 
-                                ? (darkMode ? 'rgba(220, 38, 38, 0.15)' : 'rgba(254, 226, 226, 0.5)')
-                                : (darkMode ? 'rgba(5, 150, 105, 0.15)' : 'rgba(167, 243, 208, 0.5)'))
-                            : 'transparent'
-                      }}
-                    >
-                      {index + 1}
-                    </div>
-                  );
-                })}
-              </div>
+              {diffLines.map((line, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '0 8px',
+                    minHeight: '20.8px'
+                  }}
+                >
+                  {line.lineNumber}
+                </div>
+              ))}
             </div>
 
-            {/* Content with line-level highlighting */}
+            {/* Content with character-level highlighting */}
             <div style={{
               flex: 1,
+              overflow: 'auto',
               minHeight: 0,
               minWidth: 0
             }}>
@@ -680,43 +456,29 @@ const DiffPanel = ({
                 overflowX: 'auto',
                 minWidth: 'fit-content'
               }}>
-                {diffLines.map((line, lineIndex) => {
-                  const isCurrentDiff = isInCurrentDiffBlock(line.lineNumber);
-                  return (
-                    <div 
-                      key={lineIndex} 
-                      style={{ 
-                        minHeight: '20.8px',
-                        backgroundColor: isCurrentDiff && line.isHighlighted
-                          ? (side === 'left' 
-                              ? (darkMode ? 'rgba(220, 38, 38, 0.35)' : 'rgba(254, 226, 226, 0.9)')
-                              : (darkMode ? 'rgba(5, 150, 105, 0.35)' : 'rgba(167, 243, 208, 0.9)'))
-                          : line.isHighlighted 
+                {diffLines.map((line, lineIndex) => (
+                  <div key={lineIndex} style={{ minHeight: '20.8px' }}>
+                    {line.content.map((charData, charIndex) => (
+                      <span
+                        key={charIndex}
+                        style={{
+                          backgroundColor: charData.isHighlighted 
                             ? (side === 'left' 
                                 ? (darkMode ? 'rgba(220, 38, 38, 0.25)' : 'rgba(254, 226, 226, 0.7)')
                                 : (darkMode ? 'rgba(5, 150, 105, 0.25)' : 'rgba(167, 243, 208, 0.7)'))
                             : 'transparent',
-                        paddingLeft: '4px',
-                        paddingRight: '4px',
-                        marginLeft: '-4px',
-                        marginRight: '-4px',
-                        border: isCurrentDiff && line.isHighlighted ? `2px solid ${side === 'left' ? (darkMode ? '#dc2626' : '#b91c1c') : (darkMode ? '#059669' : '#047857')}` : 'none',
-                        borderLeft: 'none',
-                        borderRight: 'none'
-                      }}
-                    >
-                      <span style={{
-                        color: line.isHighlighted 
-                          ? (side === 'left' 
-                              ? (darkMode ? '#fca5a5' : '#991b1b')
-                              : (darkMode ? '#6ee7b7' : '#065f46'))
-                          : 'inherit'
-                      }}>
-                        {line.content || ' '}
+                          color: charData.isHighlighted 
+                            ? (side === 'left' 
+                                ? (darkMode ? '#fca5a5' : '#991b1b')
+                                : (darkMode ? '#6ee7b7' : '#065f46'))
+                            : 'inherit'
+                        }}
+                      >
+                        {charData.char}
                       </span>
-                    </div>
-                  );
-                })}
+                    ))}
+                  </div>
+                ))}
               </pre>
             </div>
           </>
@@ -724,7 +486,7 @@ const DiffPanel = ({
           <textarea
             value={json}
             onChange={onJsonChange}
-            placeholder={`Paste ${label.toLowerCase()} JSON here or click "Load" to upload a file...`}
+            placeholder={`Paste ${label.toLowerCase()} JSON here...`}
             style={{
               width: '100%',
               height: '100%',
@@ -748,6 +510,7 @@ const DiffPanel = ({
   );
 };
 
+// Helper function to find structural differences
 const findDifferences = (obj1, obj2, path = '') => {
   const differences = [];
 
