@@ -624,6 +624,9 @@ const DiffPanel = ({
           <>
             {/* Line numbers */}
             <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
               width: `${lineNumberWidth}px`,
               backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
               borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
@@ -633,8 +636,7 @@ const DiffPanel = ({
               color: darkMode ? '#6b7280' : '#9ca3af',
               textAlign: 'right',
               userSelect: 'none',
-              flexShrink: 0,
-              overflow: 'hidden'
+              pointerEvents: 'none'
             }}>
               <div style={{ padding: '16px 0' }}>
                 {diffLines.map((line, index) => {
@@ -667,7 +669,8 @@ const DiffPanel = ({
             <div style={{
               flex: 1,
               minHeight: 0,
-              minWidth: 0
+              minWidth: 0,
+              paddingLeft: `${lineNumberWidth}px`
             }}>
               <pre style={{
                 margin: 0,

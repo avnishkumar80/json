@@ -9,7 +9,8 @@ import {
   Save,
   Settings,
   TreePine,
-  RotateCcw
+  RotateCcw,
+  GitCompare
 } from 'lucide-react';
 
 const SimplifiedHeader = ({
@@ -183,6 +184,16 @@ const SimplifiedHeader = ({
               >
                 <TreePine size={18} />
                 <span>Tree</span>
+              </button>
+              
+              <button
+                onClick={() => switchViewMode('compare')}
+                className={`view-btn ${viewMode === 'compare' ? 'active' : ''}`}
+                style={viewButtonStyle(viewMode === 'compare')}
+                title="Compare JSON Files"
+              >
+                <GitCompare size={18} />
+                <span>Compare</span>
               </button>
             </div>
 
