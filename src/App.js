@@ -6,7 +6,10 @@ import {
   KeyboardHelpModal,
   ShareModal,
   AutoFixSuggestions,
-  CompareView
+  CompareView,
+  SchemaValidationModal,
+  EmptyState,
+  StatusBar
 } from './components';
 import SimplifiedHeader from './components/Header/SimplifiedHeader';
 import SearchBar from './components/SearchBar/SearchBar';
@@ -16,6 +19,7 @@ import { useSearch } from './hooks/useSearch';
 import { useTreeView } from './hooks/useTreeView';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useSchemaValidation } from './hooks/useSchemaValidation';
 import { validateJson, formatJson, minifyJson } from './utils/jsonUtils';
 import { analyzeJsonErrors, applySingleFix, applyAllFixes } from './utils/jsonAutoFix';
 import { trackEvent } from './utils/analytics';
@@ -33,7 +37,9 @@ const JsonFormatter = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [autoFixSuggestions, setAutoFixSuggestions] = useState([]);
   const [showAutoFix, setShowAutoFix] = useState(false);
-  
+  const [showSchemaModal, setShowSchemaModal] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ line: 1, col: 1 });
   // Refs
   const textareaRef = useRef(null);
 
@@ -41,7 +47,18 @@ const JsonFormatter = () => {
   const { darkMode, toggleTheme } = useTheme();
   const { hasUnsavedChanges, setHasUnsavedChanges, setLastSavedContent, checkUnsavedChanges } = useUnsavedChanges();
   const { expandedNodes, toggleNode, expandAll, collapseAll } = useTreeView();
-  
+
+  const {
+    schema,
+    schemaString,
+    validationErrors: schemaValidationErrors,
+    isSchemaValid,
+    schemaError,
+    updateSchema,
+    validate: validateAgainstSchema,
+    clearSchema
+  } = useSchemaValidation();
+
   const {
     searchQuery,
     searchResults,
@@ -77,11 +94,11 @@ const JsonFormatter = () => {
   const handleInputChange = (e) => {
     const value = e.target.value;
     setJsonInput(value);
-    
+
     const validation = validateJson(value);
     setError(validation.error);
     checkUnsavedChanges(value);
-    
+
     // Analyze for auto-fix suggestions when there's an error
     if (!validation.isValid && value.trim()) {
       const analysis = analyzeJsonErrors(value);
@@ -93,12 +110,28 @@ const JsonFormatter = () => {
       }
     } else {
       setShowAutoFix(false);
+
+      // If JSON is valid, check against schema if one exists
+      if (schema && value.trim()) {
+        validateAgainstSchema(value);
+      }
     }
-    
+
     if (searchQuery) {
       performSearch(searchQuery, value);
     }
   };
+
+  // Effect to update error state when schema validation errors change
+  React.useEffect(() => {
+    if (schemaValidationErrors.length > 0) {
+      const errorMsg = `Schema Error: ${schemaValidationErrors[0].message} (${schemaValidationErrors[0].path})`;
+      setError(errorMsg);
+    } else if (validateJson(jsonInput).isValid) {
+      // Only clear error if JSON syntax is also valid
+      setError('');
+    }
+  }, [schemaValidationErrors, jsonInput]);
 
   const handleFormatJson = () => {
     const validation = validateJson(jsonInput);
@@ -132,7 +165,7 @@ const JsonFormatter = () => {
     if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to clear?')) {
       return;
     }
-    
+
     setJsonInput('');
     setError('');
     setCurrentFileName('');
@@ -144,7 +177,7 @@ const JsonFormatter = () => {
 
   const copyToClipboard = async () => {
     if (!jsonInput.trim()) return;
-    
+
     try {
       await navigator.clipboard.writeText(jsonInput);
       setCopied(true);
@@ -207,7 +240,7 @@ const JsonFormatter = () => {
     const fixedJson = applySingleFix(jsonInput, fix.type);
     setJsonInput(fixedJson);
     checkUnsavedChanges(fixedJson);
-    
+
     // Re-analyze for remaining issues
     const validation = validateJson(fixedJson);
     if (!validation.isValid) {
@@ -218,7 +251,7 @@ const JsonFormatter = () => {
       setShowAutoFix(false);
       setError('');
     }
-    
+
     trackEvent('apply_single_fix', { fixType: fix.type });
   };
 
@@ -226,7 +259,7 @@ const JsonFormatter = () => {
     const fixedJson = applyAllFixes(jsonInput);
     setJsonInput(fixedJson);
     checkUnsavedChanges(fixedJson);
-    
+
     const validation = validateJson(fixedJson);
     if (validation.isValid) {
       setError('');
@@ -236,7 +269,7 @@ const JsonFormatter = () => {
       setAutoFixSuggestions(analysis.fixes || []);
       setShowAutoFix(analysis.fixes && analysis.fixes.length > 0);
     }
-    
+
     trackEvent('apply_all_fixes', { fixCount: autoFixSuggestions.length });
   };
 
@@ -254,7 +287,42 @@ const JsonFormatter = () => {
     if (results.length > 0 && currentSearchIndex >= results.length) {
       setCurrentSearchIndex(0);
     }
+    if (results.length > 0 && currentSearchIndex >= results.length) {
+      setCurrentSearchIndex(0);
+    }
   }, [currentSearchIndex, setSearchResults, setCurrentSearchIndex]);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target.result;
+        setJsonInput(content);
+        setCurrentFileName(file.name);
+        checkUnsavedChanges(content);
+        // Validate immediately
+        const validation = validateJson(content);
+        setError(validation.error);
+        trackEvent('file_dropped');
+      };
+      reader.readAsText(file);
+    }
+  }, [checkUnsavedChanges, setCurrentFileName]);
 
   // Show compare view
   if (viewMode === 'compare') {
@@ -274,8 +342,47 @@ const JsonFormatter = () => {
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
+      overflow: 'hidden',
+      position: 'relative' // For drag overlay
+    }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drag Overlay */}
+      {isDragging && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: darkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: `4px dashed ${darkMode ? '#60a5fa' : '#3b82f6'}`,
+          margin: '12px',
+          borderRadius: '12px',
+          pointerEvents: 'none'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            color: darkMode ? '#60a5fa' : '#3b82f6'
+          }}>
+            <div style={{ marginBottom: '16px' }}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>Drop JSON file here</h2>
+          </div>
+        </div>
+      )}
+
       {/* Simplified Header - Focus on Editor/Tree */}
       <SimplifiedHeader
         darkMode={darkMode}
@@ -295,6 +402,9 @@ const JsonFormatter = () => {
         searchResults={searchResults}
         currentSearchIndex={currentSearchIndex}
         navigateSearch={navigateSearch}
+        onShowSchemaModal={() => setShowSchemaModal(true)}
+        isSchemaValid={isSchemaValid}
+        onGoHome={handleClearInput}
       />
 
       {/* Auto-Fix Suggestions */}
@@ -309,7 +419,7 @@ const JsonFormatter = () => {
       )}
 
       {/* Main Content Area - Full Width and Full Height */}
-      <div style={{ 
+      <div style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
@@ -327,7 +437,28 @@ const JsonFormatter = () => {
           minHeight: 0,
           overflow: 'hidden'
         }}>
-          {viewMode === VIEW_MODES.EDITOR ? (
+          {!jsonInput.trim() ? (
+            <EmptyState
+              darkMode={darkMode}
+              onPaste={async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  if (text) {
+                    setJsonInput(text);
+                    checkUnsavedChanges(text);
+                    // Validate
+                    const validation = validateJson(text);
+                    setError(validation.error);
+                    trackEvent('pasted_from_empty_state');
+                  }
+                } catch (e) {
+                  console.error('Failed to read clipboard:', e);
+                }
+              }}
+              onLoadSample={loadSample}
+              onOpenFile={openFile}
+            />
+          ) : viewMode === VIEW_MODES.EDITOR ? (
             <JsonEditor
               jsonInput={jsonInput}
               error={error}
@@ -338,6 +469,7 @@ const JsonFormatter = () => {
               onCopyToClipboard={copyToClipboard}
               searchResults={searchResults}
               currentSearchIndex={currentSearchIndex}
+              onCursorChange={setCursorPosition}
             />
           ) : (
             <TreeView
@@ -356,6 +488,16 @@ const JsonFormatter = () => {
           )}
         </div>
       </div>
+
+      {/* Status Bar */}
+      <StatusBar
+        darkMode={darkMode}
+        cursorPosition={cursorPosition}
+        jsonSize={new Blob([jsonInput]).size}
+        isSchemaValid={schema ? isSchemaValid : undefined}
+        indentSize={indentSize}
+        onIndentChange={setIndentSize}
+      />
 
       {/* Hidden File Input */}
       <input
@@ -393,8 +535,18 @@ const JsonFormatter = () => {
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
-        jsonContent={jsonInput}
         darkMode={darkMode}
+      />
+
+      <SchemaValidationModal
+        isOpen={showSchemaModal}
+        onClose={() => setShowSchemaModal(false)}
+        schemaString={schemaString}
+        onSchemaChange={updateSchema}
+        isSchemaValid={isSchemaValid}
+        schemaError={schemaError}
+        darkMode={darkMode}
+        onClearSchema={clearSchema}
       />
     </div>
   );

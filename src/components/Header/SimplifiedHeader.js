@@ -1,8 +1,8 @@
 import React from 'react';
-import { 
-  FileText, 
-  Sun, 
-  Moon, 
+import {
+  FileText,
+  Sun,
+  Moon,
   Search,
   FolderOpen,
   Download,
@@ -10,7 +10,8 @@ import {
   Settings,
   TreePine,
   RotateCcw,
-  GitCompare
+  GitCompare,
+  FileJson
 } from 'lucide-react';
 
 const SimplifiedHeader = ({
@@ -30,7 +31,11 @@ const SimplifiedHeader = ({
   onSearchChange,
   searchResults,
   currentSearchIndex,
-  navigateSearch
+
+  navigateSearch,
+  onShowSchemaModal,
+  isSchemaValid,
+  onGoHome
 }) => {
   const isJsonValid = jsonInput.trim() && !error;
 
@@ -55,7 +60,7 @@ const SimplifiedHeader = ({
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backgroundColor: isActive 
+    backgroundColor: isActive
       ? '#10b981'
       : (darkMode ? '#374151' : '#f3f4f6'),
     color: isActive ? '#ffffff' : (darkMode ? '#d1d5db' : '#374151'),
@@ -85,6 +90,9 @@ const SimplifiedHeader = ({
             border-color: #10b981;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
           }
+          .brand-logo:hover {
+            opacity: 0.8;
+          }
         `}
       </style>
       <header style={{
@@ -93,8 +101,8 @@ const SimplifiedHeader = ({
         zIndex: 100,
         borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
         backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-        boxShadow: darkMode 
-          ? '0 1px 3px 0 rgba(0, 0, 0, 0.2)' 
+        boxShadow: darkMode
+          ? '0 1px 3px 0 rgba(0, 0, 0, 0.2)'
           : '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
       }}>
         <div style={{
@@ -106,7 +114,18 @@ const SimplifiedHeader = ({
           flexWrap: 'wrap'
         }}>
           {/* Brand Section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            onClick={onGoHome}
+            className="brand-logo"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              transition: 'opacity 0.2s'
+            }}
+            title="Go Home"
+          >
             <div style={{
               padding: '8px',
               background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
@@ -117,7 +136,7 @@ const SimplifiedHeader = ({
             }}>
               <FileText size={20} />
             </div>
-            
+
             <div>
               <h1 style={{
                 fontSize: '18px',
@@ -127,7 +146,7 @@ const SimplifiedHeader = ({
               }}>
                 GuidedJSON
               </h1>
-              
+
               {currentFileName && (
                 <div style={{
                   fontSize: '11px',
@@ -170,7 +189,7 @@ const SimplifiedHeader = ({
                 <FileText size={18} />
                 <span>Editor</span>
               </button>
-              
+
               <button
                 onClick={() => switchViewMode('tree')}
                 disabled={!isJsonValid}
@@ -185,7 +204,7 @@ const SimplifiedHeader = ({
                 <TreePine size={18} />
                 <span>Tree</span>
               </button>
-              
+
               <button
                 onClick={() => switchViewMode('compare')}
                 className={`view-btn ${viewMode === 'compare' ? 'active' : ''}`}
@@ -206,8 +225,8 @@ const SimplifiedHeader = ({
               minWidth: '300px'
             }}>
               <div style={{ position: 'relative', flex: 1 }}>
-                <Search 
-                  size={16} 
+                <Search
+                  size={16}
                   style={{
                     position: 'absolute',
                     left: '12px',
@@ -257,7 +276,7 @@ const SimplifiedHeader = ({
                   }}
                 />
               </div>
-              
+
               {/* Search Results Counter and Navigation */}
               {searchResults && searchResults.length > 0 && (
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -342,8 +361,8 @@ const SimplifiedHeader = ({
               style={{
                 ...iconButtonStyle,
                 backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                color: hasUnsavedChanges && jsonInput.trim() 
-                  ? '#f59e0b' 
+                color: hasUnsavedChanges && jsonInput.trim()
+                  ? '#f59e0b'
                   : (darkMode ? '#d1d5db' : '#374151'),
                 cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
                 opacity: !jsonInput.trim() ? 0.5 : 1
@@ -375,6 +394,19 @@ const SimplifiedHeader = ({
             }} />
 
             <button
+              onClick={onShowSchemaModal}
+              className="header-btn"
+              style={{
+                ...iconButtonStyle,
+                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+                color: isSchemaValid ? (darkMode ? '#d1d5db' : '#374151') : (darkMode ? '#f87171' : '#dc2626')
+              }}
+              title="JSON Schema Validation"
+            >
+              <FileJson size={18} />
+            </button>
+
+            <button
               onClick={() => setShowSettings(true)}
               className="header-btn"
               style={{
@@ -386,7 +418,7 @@ const SimplifiedHeader = ({
             >
               <Settings size={18} />
             </button>
-            
+
             <button
               onClick={toggleTheme}
               className="header-btn"

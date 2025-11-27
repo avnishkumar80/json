@@ -10,7 +10,8 @@ const JsonEditor = ({
   onInputChange,
   onCopyToClipboard,
   searchResults = [],
-  currentSearchIndex = -1
+  currentSearchIndex = -1,
+  onCursorChange
 }) => {
   const highlightLayerRef = useRef(null);
 
@@ -24,9 +25,9 @@ const JsonEditor = ({
         const lineNumber = lines.length;
         const lineHeight = 22.4; // 14px font * 1.6 line-height
         const scrollTop = (lineNumber - 1) * lineHeight - 100; // Offset for better visibility
-        
+
         textareaRef.current.scrollTop = Math.max(0, scrollTop);
-        
+
         // Scroll highlight layer to match
         if (highlightLayerRef.current) {
           highlightLayerRef.current.scrollTop = textareaRef.current.scrollTop;
@@ -43,6 +44,21 @@ const JsonEditor = ({
     }
   };
 
+  // Handle cursor position updates
+  const handleCursorUpdate = (e) => {
+    if (!onCursorChange) return;
+
+    const textarea = e.target;
+    const selectionStart = textarea.selectionStart;
+    const value = textarea.value;
+
+    const lines = value.substring(0, selectionStart).split('\n');
+    const line = lines.length;
+    const col = lines[lines.length - 1].length + 1;
+
+    onCursorChange({ line, col });
+  };
+
   // Create highlighted content
   const createHighlightedContent = () => {
     if (searchResults.length === 0 || !jsonInput) {
@@ -55,18 +71,18 @@ const JsonEditor = ({
     searchResults.forEach((result, index) => {
       // Add text before this match
       highlighted += escapeHtml(jsonInput.substring(lastIndex, result.start));
-      
+
       // Add highlighted match
       const matchText = escapeHtml(jsonInput.substring(result.start, result.end));
       const isActive = index === currentSearchIndex;
       highlighted += `<mark class="${isActive ? 'search-highlight-active' : 'search-highlight'}">${matchText}</mark>`;
-      
+
       lastIndex = result.end;
     });
 
     // Add remaining text
     highlighted += escapeHtml(jsonInput.substring(lastIndex));
-    
+
     return highlighted;
   };
 
@@ -137,12 +153,18 @@ const JsonEditor = ({
             dangerouslySetInnerHTML={{ __html: createHighlightedContent() }}
           />
         )}
-        
+
         <textarea
           ref={textareaRef}
           value={jsonInput}
-          onChange={onInputChange}
+          onChange={(e) => {
+            onInputChange(e);
+            handleCursorUpdate(e);
+          }}
           onScroll={handleScroll}
+          onSelect={handleCursorUpdate}
+          onClick={handleCursorUpdate}
+          onKeyUp={handleCursorUpdate}
           placeholder="Paste your JSON here..."
           style={{
             width: '100%',

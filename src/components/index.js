@@ -11,3 +11,6 @@ export { default as KeyboardHelpModal } from './KeyboardHelp';
 export { default as ShareModal } from './ShareModal';
 export { default as AutoFixSuggestions } from './AutoFixSuggestions';
 export { default as CompareView } from './CompareView';
+export { default as SchemaValidationModal } from './SchemaValidation/SchemaValidationModal';
+export { default as EmptyState } from './EmptyState/EmptyState';
+export { default as StatusBar } from './StatusBar/StatusBar';
