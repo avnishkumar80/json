@@ -2,29 +2,31 @@ import React from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { getValueColor } from '../../utils/treeUtils';
 
-const TreeNode = ({ 
-  data, 
-  nodeKey, 
-  path = '', 
-  level = 0, 
-  expandedNodes, 
+const TreeNode = ({
+  data,
+  nodeKey,
+  path = '',
+  level = 0,
+  expandedNodes,
   onToggleNode,
   darkMode,
   searchResults = [],
-  currentSearchIndex = -1
+  searchResultsMap,
+  currentSearchIndex = -1,
+  searchQuery = ''
 }) => {
   const isExpanded = expandedNodes.has(path);
   const isObject = typeof data === 'object' && data !== null;
   const isArray = Array.isArray(data);
 
   // Check if this node matches search
-  const matchingResult = searchResults.find(result => result.path === path);
+  const matchingResult = searchResultsMap ? searchResultsMap.get(path) : null;
   const isMatch = !!matchingResult;
   const isCurrentMatch = currentSearchIndex >= 0 && searchResults[currentSearchIndex]?.path === path;
 
   const renderValue = (value) => {
     const color = getValueColor(value, darkMode);
-    
+
     if (typeof value === 'string') {
       return <span style={{ color }}>{`"${value}"`}</span>;
     } else if (value === null) {
@@ -35,25 +37,55 @@ const TreeNode = ({
   };
 
   // Highlight function for matching text
+  // Highlight function for matching text
   const highlightText = (text) => {
-    if (!matchingResult) return text;
+    if (!matchingResult || !searchQuery) return text;
 
-    return (
-      <span style={{
-        backgroundColor: isCurrentMatch ? '#f59e0b' : '#fbbf24',
-        color: '#000',
-        padding: '2px 4px',
-        borderRadius: '3px',
-        fontWeight: isCurrentMatch ? '700' : '600'
-      }}>
-        {text}
-      </span>
-    );
+    const stringText = String(text);
+    const lowerText = stringText.toLowerCase();
+    const lowerQuery = searchQuery.toLowerCase();
+
+    if (!lowerText.includes(lowerQuery)) return text;
+
+    const parts = [];
+    let lastIndex = 0;
+    let index = lowerText.indexOf(lowerQuery);
+
+    while (index !== -1) {
+      // Add text before match
+      if (index > lastIndex) {
+        parts.push(stringText.substring(lastIndex, index));
+      }
+
+      // Add match
+      const matchText = stringText.substring(index, index + lowerQuery.length);
+      parts.push(
+        <span key={index} style={{
+          backgroundColor: isCurrentMatch ? '#f59e0b' : '#fbbf24',
+          color: '#000',
+          padding: '0 2px',
+          borderRadius: '2px',
+          fontWeight: isCurrentMatch ? '700' : '600'
+        }}>
+          {matchText}
+        </span>
+      );
+
+      lastIndex = index + lowerQuery.length;
+      index = lowerText.indexOf(lowerQuery, lastIndex);
+    }
+
+    // Add remaining text
+    if (lastIndex < stringText.length) {
+      parts.push(stringText.substring(lastIndex));
+    }
+
+    return <span>{parts}</span>;
   };
 
   return (
     <div key={path} style={{ userSelect: 'text' }}>
-      <div 
+      <div
         data-path={path}
         style={{
           display: 'flex',
@@ -97,22 +129,22 @@ const TreeNode = ({
                 color: 'inherit'
               }}
             >
-              {isExpanded ? 
-                <ChevronDown size={16} /> : 
+              {isExpanded ?
+                <ChevronDown size={16} /> :
                 <ChevronRight size={16} />
               }
             </button>
-            <span style={{ 
-              fontWeight: '500', 
-              color: darkMode ? '#f1f5f9' : '#1e293b' 
+            <span style={{
+              fontWeight: '500',
+              color: darkMode ? '#f1f5f9' : '#1e293b'
             }}>
-              {isMatch && matchingResult.matchType === 'key' ? 
-                highlightText(nodeKey) : 
+              {isMatch && matchingResult.matchType === 'key' ?
+                highlightText(nodeKey) :
                 nodeKey}:
             </span>
             <span style={{ marginLeft: '8px', fontSize: '14px', color: darkMode ? '#6b7280' : '#6b7280' }}>
-              {isArray ? 
-                `Array(${data.length})` : 
+              {isArray ?
+                `Array(${data.length})` :
                 `Object(${Object.keys(data).length})`
               }
             </span>
@@ -120,35 +152,27 @@ const TreeNode = ({
         ) : (
           <>
             <div style={{ width: '20px', marginRight: '8px' }}></div>
-            <span style={{ 
-              fontWeight: '500', 
-              color: darkMode ? '#f1f5f9' : '#1e293b' 
+            <span style={{
+              fontWeight: '500',
+              color: darkMode ? '#f1f5f9' : '#1e293b'
             }}>
-              {isMatch && matchingResult.matchType === 'key' ? 
-                highlightText(nodeKey) : 
+              {isMatch && matchingResult.matchType === 'key' ?
+                highlightText(nodeKey) :
                 nodeKey}:
             </span>
             <span style={{ marginLeft: '8px' }}>
               {isMatch && matchingResult.matchType === 'value' ?
-                <span style={{
-                  backgroundColor: isCurrentMatch ? '#f59e0b' : '#fbbf24',
-                  color: '#000',
-                  padding: '2px 4px',
-                  borderRadius: '3px',
-                  fontWeight: isCurrentMatch ? '700' : '600'
-                }}>
-                  {typeof data === 'string' ? `"${data}"` : String(data)}
-                </span> :
+                highlightText(typeof data === 'string' ? `"${data}"` : data) :
                 renderValue(data)
               }
             </span>
           </>
         )}
       </div>
-      
+
       {isObject && isExpanded && (
         <div>
-          {isArray ? 
+          {isArray ?
             data.map((item, index) => (
               <TreeNode
                 key={`${path}.[${index}]`}
@@ -160,7 +184,9 @@ const TreeNode = ({
                 onToggleNode={onToggleNode}
                 darkMode={darkMode}
                 searchResults={searchResults}
+                searchResultsMap={searchResultsMap}
                 currentSearchIndex={currentSearchIndex}
+                searchQuery={searchQuery}
               />
             )) :
             Object.entries(data).map(([childKey, childValue]) => (
@@ -174,7 +200,9 @@ const TreeNode = ({
                 onToggleNode={onToggleNode}
                 darkMode={darkMode}
                 searchResults={searchResults}
+                searchResultsMap={searchResultsMap}
                 currentSearchIndex={currentSearchIndex}
+                searchQuery={searchQuery}
               />
             ))
           }

@@ -61,6 +61,7 @@ const JsonFormatter = () => {
 
   const {
     searchQuery,
+    debouncedSearchQuery,
     searchResults,
     currentSearchIndex,
     showSearch,
@@ -116,11 +117,14 @@ const JsonFormatter = () => {
         validateAgainstSchema(value);
       }
     }
-
-    if (searchQuery) {
-      performSearch(searchQuery, value);
-    }
   };
+
+  // Effect to perform search when debounced query or json input changes
+  React.useEffect(() => {
+    if (viewMode === VIEW_MODES.EDITOR) {
+      performSearch(debouncedSearchQuery, jsonInput);
+    }
+  }, [debouncedSearchQuery, jsonInput, performSearch, viewMode]);
 
   // Effect to update error state when schema validation errors change
   React.useEffect(() => {
@@ -278,19 +282,19 @@ const JsonFormatter = () => {
   };
 
   const handleSearchChangeWrapper = (e) => {
-    handleSearchChange(e, jsonInput);
+    handleSearchChange(e);
   };
 
   const handleTreeSearchResultsUpdate = useCallback((results) => {
     // When tree view performs search, update the global search results
     setSearchResults(results);
-    if (results.length > 0 && currentSearchIndex >= results.length) {
-      setCurrentSearchIndex(0);
-    }
-    if (results.length > 0 && currentSearchIndex >= results.length) {
-      setCurrentSearchIndex(0);
-    }
-  }, [currentSearchIndex, setSearchResults, setCurrentSearchIndex]);
+    setCurrentSearchIndex(prev => {
+      if (results.length > 0 && prev >= results.length) {
+        return 0;
+      }
+      return prev;
+    });
+  }, [setSearchResults, setCurrentSearchIndex]);
 
   // Drag and drop handlers
   const handleDragOver = useCallback((e) => {

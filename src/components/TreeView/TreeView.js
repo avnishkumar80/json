@@ -18,16 +18,17 @@ const TreeView = ({
   onSearchResultsUpdate
 }) => {
   // Parse JSON data
-  let parsedData;
-  try {
-    if (!jsonInput.trim()) {
-      parsedData = null;
-    } else {
-      parsedData = JSON.parse(jsonInput);
+  const parsedData = useMemo(() => {
+    try {
+      if (!jsonInput.trim()) {
+        return null;
+      } else {
+        return JSON.parse(jsonInput);
+      }
+    } catch (e) {
+      return null;
     }
-  } catch (e) {
-    parsedData = null;
-  }
+  }, [jsonInput]);
 
   // Ensure root is always expanded
   useEffect(() => {
@@ -42,6 +43,15 @@ const TreeView = ({
     return searchInTree(parsedData, searchQuery);
   }, [searchQuery, parsedData]);
 
+  // Create a map for O(1) lookup of search results by path
+  const searchResultsMap = useMemo(() => {
+    const map = new Map();
+    treeSearchResults.forEach(result => {
+      map.set(result.path, result);
+    });
+    return map;
+  }, [treeSearchResults]);
+
   // Update parent with tree search results when they change
   useEffect(() => {
     if (onSearchResultsUpdate && searchQuery) {
@@ -55,7 +65,7 @@ const TreeView = ({
       const currentResult = treeSearchResults[currentSearchIndex];
       if (currentResult && currentResult.path) {
         const parentPaths = getParentPaths(currentResult.path);
-        
+
         // Expand all parent nodes of current result
         parentPaths.forEach(parentPath => {
           if (!expandedNodes.has(parentPath)) {
@@ -71,15 +81,17 @@ const TreeView = ({
     if (treeSearchResults.length > 0 && currentSearchIndex >= 0 && currentSearchIndex < treeSearchResults.length) {
       const currentResult = treeSearchResults[currentSearchIndex];
       if (currentResult && currentResult.path) {
-        // Small delay to allow expansion to complete
-        const timeoutId = setTimeout(() => {
-          const element = document.querySelector(`[data-path="${currentResult.path}"]`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 150);
-        
-        return () => clearTimeout(timeoutId);
+        // Use requestAnimationFrame to ensure expansion has rendered
+        const rafId = requestAnimationFrame(() => {
+          const timeoutId = setTimeout(() => {
+            const element = document.querySelector(`[data-path="${currentResult.path}"]`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+        });
+
+        return () => cancelAnimationFrame(rafId);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -142,7 +154,9 @@ const TreeView = ({
           expandedNodes={expandedNodes}
           onToggleNode={onToggleNode}
           searchResults={treeSearchResults}
+          searchResultsMap={searchResultsMap}
           currentSearchIndex={currentSearchIndex}
+          searchQuery={searchQuery}
         />
       </div>
 
@@ -165,8 +179,8 @@ const TreeView = ({
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          boxShadow: darkMode 
-            ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)' 
+          boxShadow: darkMode
+            ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
             : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           zIndex: 10
         }}

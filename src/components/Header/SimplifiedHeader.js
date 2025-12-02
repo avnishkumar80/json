@@ -219,116 +219,137 @@ const SimplifiedHeader = ({
             {/* Search Box */}
             <div style={{
               position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              minWidth: '300px'
+              minWidth: '300px',
+              maxWidth: '400px',
+              flex: 1
             }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <Search
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: darkMode ? '#9ca3af' : '#6b7280',
-                    pointerEvents: 'none'
-                  }}
-                />
-                <input
-                  id="global-search-input"
-                  type="text"
-                  value={searchQuery || ''}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    onSearchChange(e);
-                  }}
-                  onKeyDown={(e) => {
-                    e.stopPropagation();
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (searchResults && searchResults.length > 0) {
-                        navigateSearch(e.shiftKey ? 'prev' : 'next');
-                      }
+              <Search
+                size={16}
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: darkMode ? '#9ca3af' : '#6b7280',
+                  pointerEvents: 'none',
+                  zIndex: 10
+                }}
+              />
+              <input
+                id="global-search-input"
+                type="text"
+                value={searchQuery || ''}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onSearchChange(e);
+                }}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (searchResults && searchResults.length > 0) {
+                      navigateSearch(e.shiftKey ? 'prev' : 'next');
                     }
-                    // Prevent any other key from bubbling
-                    if (e.key !== 'Tab') {
-                      e.stopPropagation();
-                    }
-                  }}
-                  onFocus={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                  onBlur={(e) => e.stopPropagation()}
-                  onInput={(e) => e.stopPropagation()}
-                  placeholder="Search keys and values..."
-                  className="search-input"
-                  autoComplete="off"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px 8px 36px',
-                    border: `1px solid ${darkMode ? '#4b5563' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    backgroundColor: darkMode ? '#374151' : '#ffffff',
-                    color: darkMode ? '#f3f4f6' : '#111827',
-                    fontSize: '14px',
-                    transition: 'all 0.2s'
-                  }}
-                />
-              </div>
+                  }
+                  // Prevent any other key from bubbling
+                  if (e.key !== 'Tab') {
+                    e.stopPropagation();
+                  }
+                }}
+                onFocus={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={(e) => e.stopPropagation()}
+                onInput={(e) => e.stopPropagation()}
+                placeholder="Search keys and values..."
+                className="search-input"
+                autoComplete="off"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 36px',
+                  paddingRight: searchQuery ? '140px' : '12px',
+                  border: `1px solid ${darkMode ? '#4b5563' : '#d1d5db'}`,
+                  borderRadius: '8px',
+                  backgroundColor: darkMode ? '#374151' : '#ffffff',
+                  color: darkMode ? '#f3f4f6' : '#111827',
+                  fontSize: '14px',
+                  transition: 'all 0.2s'
+                }}
+              />
 
               {/* Search Results Counter and Navigation */}
-              {searchResults && searchResults.length > 0 && (
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              {searchQuery && (
+                <div style={{
+                  position: 'absolute',
+                  right: '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  gap: '4px',
+                  alignItems: 'center',
+                  zIndex: 10
+                }}>
                   <span style={{
-                    fontSize: '13px',
-                    color: darkMode ? '#9ca3af' : '#6b7280',
+                    fontSize: '12px',
+                    color: searchResults.length > 0 ? (darkMode ? '#9ca3af' : '#6b7280') : (darkMode ? '#f87171' : '#dc2626'),
                     whiteSpace: 'nowrap',
                     fontWeight: '600',
-                    padding: '4px 8px',
+                    padding: '2px 6px',
                     backgroundColor: darkMode ? '#1f2937' : '#f3f4f6',
-                    borderRadius: '6px'
+                    borderRadius: '4px',
+                    marginRight: '2px'
                   }}>
-                    {currentSearchIndex + 1}/{searchResults.length}
+                    {searchResults.length > 0
+                      ? `${currentSearchIndex + 1}/${searchResults.length}`
+                      : 'No results'
+                    }
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigateSearch('prev');
-                    }}
-                    style={{
-                      ...iconButtonStyle,
-                      backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                      color: darkMode ? '#d1d5db' : '#374151',
-                      padding: '6px 8px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      lineHeight: '1'
-                    }}
-                    className="header-btn"
-                    title="Previous result (Shift+Enter)"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigateSearch('next');
-                    }}
-                    style={{
-                      ...iconButtonStyle,
-                      backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                      color: darkMode ? '#d1d5db' : '#374151',
-                      padding: '6px 8px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      lineHeight: '1'
-                    }}
-                    className="header-btn"
-                    title="Next result (Enter)"
-                  >
-                    ↓
-                  </button>
+
+                  {searchResults.length > 0 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigateSearch('prev');
+                        }}
+                        style={{
+                          ...iconButtonStyle,
+                          backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+                          color: darkMode ? '#d1d5db' : '#374151',
+                          padding: '4px',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        className="header-btn"
+                        title="Previous result (Shift+Enter)"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigateSearch('next');
+                        }}
+                        style={{
+                          ...iconButtonStyle,
+                          backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+                          color: darkMode ? '#d1d5db' : '#374151',
+                          padding: '4px',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        className="header-btn"
+                        title="Next result (Enter)"
+                      >
+                        ↓
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
