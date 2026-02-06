@@ -40,6 +40,7 @@ const JsonFormatter = () => {
   const [showSchemaModal, setShowSchemaModal] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, col: 1 });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   // Refs
   const textareaRef = useRef(null);
 
@@ -480,10 +481,41 @@ const JsonFormatter = () => {
               onSearchResultsUpdate={handleTreeSearchResultsUpdate}
             />
           ) : (
-            <GraphVisualizer
-              jsonInput={jsonInput}
-              darkMode={darkMode}
-            />
+            // Graph Mode with Split View
+            <div style={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
+              {/* Left Side: Editor */}
+              <div style={{
+                width: isSidebarOpen ? '40%' : '0%',
+                minWidth: isSidebarOpen ? '300px' : '0',
+                borderRight: isSidebarOpen ? `1px solid ${darkMode ? '#374151' : '#e5e7eb'}` : 'none',
+                overflow: 'hidden',
+                transition: 'width 0.3s ease, min-width 0.3s ease',
+                visibility: isSidebarOpen ? 'visible' : 'hidden'
+              }}>
+                <JsonEditor
+                  jsonInput={jsonInput}
+                  error={error}
+                  darkMode={darkMode}
+                  copied={copied}
+                  textareaRef={textareaRef}
+                  onInputChange={handleInputChange}
+                  onCopyToClipboard={copyToClipboard}
+                  searchResults={searchResults}
+                  currentSearchIndex={currentSearchIndex}
+                  onCursorChange={setCursorPosition}
+                />
+              </div>
+
+              {/* Right Side: Graph */}
+              <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                <GraphVisualizer
+                  jsonInput={jsonInput}
+                  darkMode={darkMode}
+                  isSidebarOpen={isSidebarOpen}
+                  onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
