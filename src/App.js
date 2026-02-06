@@ -13,7 +13,6 @@ import {
   GraphVisualizer
 } from './components';
 import SimplifiedHeader from './components/Header/SimplifiedHeader';
-import SearchBar from './components/SearchBar/SearchBar';
 import { useTheme } from './hooks/useTheme';
 import { useFileOperations } from './hooks/useFileOperations';
 import { useSearch } from './hooks/useSearch';
@@ -65,12 +64,10 @@ const JsonFormatter = () => {
     debouncedSearchQuery,
     searchResults,
     currentSearchIndex,
-    showSearch,
     performSearch,
     navigateSearch,
     handleSearchChange,
     clearSearch,
-    toggleSearch,
     setSearchResults,
     setCurrentSearchIndex
   } = useSearch();
@@ -213,15 +210,7 @@ const JsonFormatter = () => {
     trackEvent('load_sample');
   };
 
-  const handleExpandAll = () => {
-    expandAll(jsonInput);
-    trackEvent('expand_all');
-  };
 
-  const handleCollapseAll = () => {
-    collapseAll();
-    trackEvent('collapse_all');
-  };
 
   // Keyboard shortcuts integration
   const { shortcuts } = useKeyboardShortcuts({

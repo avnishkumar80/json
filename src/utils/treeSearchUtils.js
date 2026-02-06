@@ -8,21 +8,21 @@
  */
 export const searchInTree = (data, query, path = '') => {
   if (!query.trim()) return [];
-  
+
   const results = [];
   const lowerQuery = query.toLowerCase();
-  
+
   const searchNode = (node, currentPath, key) => {
     // Check if key matches
     const keyMatch = key && key.toLowerCase().includes(lowerQuery);
-    
+
     // Check if value matches (for primitives)
     let valueMatch = false;
     if (node === null || typeof node !== 'object') {
       const valueStr = String(node).toLowerCase();
       valueMatch = valueStr.includes(lowerQuery);
     }
-    
+
     // If this node matches, add it to results
     if (keyMatch || valueMatch) {
       results.push({
@@ -32,7 +32,7 @@ export const searchInTree = (data, query, path = '') => {
         matchType: keyMatch ? 'key' : 'value'
       });
     }
-    
+
     // Recursively search children
     if (node && typeof node === 'object') {
       if (Array.isArray(node)) {
@@ -48,7 +48,7 @@ export const searchInTree = (data, query, path = '') => {
       }
     }
   };
-  
+
   // Start search from root
   if (Array.isArray(data)) {
     data.forEach((item, index) => {
@@ -59,7 +59,7 @@ export const searchInTree = (data, query, path = '') => {
       searchNode(value, key, key);
     });
   }
-  
+
   return results;
 };
 
@@ -70,15 +70,15 @@ export const searchInTree = (data, query, path = '') => {
 export const getParentPaths = (path) => {
   const parents = [];
   const parts = path.split('.');
-  
+
   for (let i = 1; i < parts.length; i++) {
     parents.push(parts.slice(0, i).join('.'));
   }
-  
+
   // Also handle array notation
   let current = '';
-  const segments = path.match(/([^.\[]+|\[\d+\])/g) || [];
-  
+  const segments = path.match(/([^.[\]]+|\[\d+\])/g) || [];
+
   for (let i = 0; i < segments.length - 1; i++) {
     if (current) {
       if (segments[i].startsWith('[')) {
@@ -93,7 +93,7 @@ export const getParentPaths = (path) => {
       parents.push(current);
     }
   }
-  
+
   return parents;
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { X, Copy, Check, Upload, Columns, List, ArrowLeft } from 'lucide-react';
+import { X, Copy, Check, Columns, List, ArrowLeft } from 'lucide-react';
 import * as Diff from 'diff';
 import CompareSetup from './CompareSetup';
 
@@ -8,7 +8,7 @@ const CompareView = ({ darkMode, onClose }) => {
   const [leftJson, setLeftJson] = useState('');
   const [rightJson, setRightJson] = useState('');
   const [viewType, setViewType] = useState('split'); // 'split' or 'inline'
-  const [ignoreWhitespace, setIgnoreWhitespace] = useState(false);
+  const [ignoreWhitespace] = useState(false);
   const [ignoreOrder, setIgnoreOrder] = useState(false);
   const [ignoreCase, setIgnoreCase] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
@@ -91,24 +91,24 @@ const CompareView = ({ darkMode, onClose }) => {
 const DiffView = ({ leftJson, rightJson, darkMode, onClose, onBack, viewType, setViewType, ignoreWhitespace, ignoreOrder, ignoreCase, focusMode, setIgnoreOrder, setIgnoreCase, setFocusMode }) => {
   const [diffBlocks, setDiffBlocks] = useState([]);
 
-  // Helper to process object for comparison
-  const processObject = (obj) => {
-    if (ignoreOrder) {
-      if (Array.isArray(obj)) {
-        // For arrays, we can't easily "sort" without context, but we can process children
-        return obj.map(processObject);
-      } else if (typeof obj === 'object' && obj !== null) {
-        return Object.keys(obj).sort().reduce((acc, key) => {
-          acc[key] = processObject(obj[key]);
-          return acc;
-        }, {});
-      }
-    }
-    return obj;
-  };
-
   // Memoize comparison to avoid recalculating on every render
   const comparison = useMemo(() => {
+    // Helper to process object for comparison
+    const processObject = (obj) => {
+      if (ignoreOrder) {
+        if (Array.isArray(obj)) {
+          // For arrays, we can't easily "sort" without context, but we can process children
+          return obj.map(processObject);
+        } else if (typeof obj === 'object' && obj !== null) {
+          return Object.keys(obj).sort().reduce((acc, key) => {
+            acc[key] = processObject(obj[key]);
+            return acc;
+          }, {});
+        }
+      }
+      return obj;
+    };
+
     try {
       // Format JSONs to ensure consistent comparison
       let leftObj = leftJson ? JSON.parse(leftJson) : {};
@@ -547,7 +547,7 @@ const highlightSyntax = (text, darkMode) => {
   if (!text) return null;
 
   // Simple regex-based highlighting
-  const parts = text.split(/(".*?"|true|false|null|\b-?\d+(?:\.\d+)?\b|[{}\[\],:])/g).filter(Boolean);
+  const parts = text.split(/(".*?"|true|false|null|\b-?\d+(?:\.\d+)?\b|[{}\[\]],:])/g).filter(Boolean);
 
   return parts.map((part, i) => {
     let color = darkMode ? '#e5e7eb' : '#1f2937'; // Default
@@ -572,7 +572,6 @@ const highlightSyntax = (text, darkMode) => {
 
 const DiffPanel = ({ title, diffBlocks, type, darkMode }) => {
   const [copied, setCopied] = useState(false);
-  const containerRef = useRef(null);
 
   // Sync scrolling
   const handleScroll = (e) => {

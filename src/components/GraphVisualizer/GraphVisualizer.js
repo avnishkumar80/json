@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React from 'react';
 import {
     ReactFlow,
     Controls,
@@ -56,15 +56,15 @@ const processJsonToGraph = (data) => {
         const isArray = Array.isArray(obj);
 
         let displayLabel = label;
-        let type = 'default';
+        // let type = 'default';
 
         // Determine node style/label based on type
         if (isObject) {
             displayLabel = isArray ? `${label} []` : `${label} {}`;
-            type = 'input'; // Just a visual distinction, could be custom node
+            // type = 'input'; // Just a visual distinction, could be custom node
         } else {
             displayLabel = `${label}: ${String(obj)}`;
-            type = 'output';
+            // type = 'output';
         }
 
         nodes.push({

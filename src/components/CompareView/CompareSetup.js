@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, ArrowRight, X } from 'lucide-react';
+import { Upload, ArrowRight, X } from 'lucide-react';
 
 const CompareSetup = ({ onCompare, darkMode }) => {
     const [leftJson, setLeftJson] = useState('');

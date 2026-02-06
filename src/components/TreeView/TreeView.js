@@ -83,7 +83,7 @@ const TreeView = ({
       if (currentResult && currentResult.path) {
         // Use requestAnimationFrame to ensure expansion has rendered
         const rafId = requestAnimationFrame(() => {
-          const timeoutId = setTimeout(() => {
+          setTimeout(() => {
             const element = document.querySelector(`[data-path="${currentResult.path}"]`);
             if (element) {
               element.scrollIntoView({ behavior: 'smooth', block: 'center' });

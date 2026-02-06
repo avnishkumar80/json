@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, AlertCircle, FileText, Hash } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
 
 const StatusBar = ({
     darkMode,
