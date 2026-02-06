@@ -46,7 +46,7 @@ const JsonFormatter = () => {
   // Custom hooks
   const { darkMode, toggleTheme } = useTheme();
   const { hasUnsavedChanges, setHasUnsavedChanges, setLastSavedContent, checkUnsavedChanges } = useUnsavedChanges();
-  const { expandedNodes, toggleNode, expandAll, collapseAll } = useTreeView();
+  const { expandedNodes, toggleNode } = useTreeView();
 
   const {
     schema,

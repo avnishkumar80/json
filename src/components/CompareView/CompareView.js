@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, Copy, Check, Columns, List, ArrowLeft } from 'lucide-react';
 import * as Diff from 'diff';
 import CompareSetup from './CompareSetup';
@@ -547,7 +547,7 @@ const highlightSyntax = (text, darkMode) => {
   if (!text) return null;
 
   // Simple regex-based highlighting
-  const parts = text.split(/(".*?"|true|false|null|\b-?\d+(?:\.\d+)?\b|[{}\[\]],:])/g).filter(Boolean);
+  const parts = text.split(/(".*?"|true|false|null|\b-?\d+(?:\.\d+)?\b|[{}[\]:,])/g).filter(Boolean);
 
   return parts.map((part, i) => {
     let color = darkMode ? '#e5e7eb' : '#1f2937'; // Default
