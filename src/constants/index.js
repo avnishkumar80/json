@@ -4,7 +4,8 @@
 
 export const VIEW_MODES = {
   EDITOR: 'editor',
-  TREE: 'tree'
+  TREE: 'tree',
+  GRAPH: 'graph'
 };
 
 export const THEMES = {
@@ -27,7 +28,7 @@ export const SAMPLE_JSON = {
   "description": "A powerful JSON formatting and visualization tool",
   "features": [
     "Format JSON",
-    "Minify JSON", 
+    "Minify JSON",
     "Tree view",
     "Search functionality",
     "Dark mode",

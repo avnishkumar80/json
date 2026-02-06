@@ -11,7 +11,8 @@ import {
   TreePine,
   RotateCcw,
   GitCompare,
-  FileJson
+  FileJson,
+  Network
 } from 'lucide-react';
 
 const SimplifiedHeader = ({
@@ -213,6 +214,21 @@ const SimplifiedHeader = ({
               >
                 <GitCompare size={18} />
                 <span>Compare</span>
+              </button>
+
+              <button
+                onClick={() => switchViewMode('graph')}
+                disabled={!isJsonValid}
+                className={`view-btn ${viewMode === 'graph' ? 'active' : ''}`}
+                style={{
+                  ...viewButtonStyle(viewMode === 'graph'),
+                  cursor: !isJsonValid ? 'not-allowed' : 'pointer',
+                  opacity: !isJsonValid ? 0.4 : 1
+                }}
+                title={!isJsonValid ? "Valid JSON required" : "Graph View"}
+              >
+                <Network size={18} />
+                <span>Graph</span>
               </button>
             </div>
 

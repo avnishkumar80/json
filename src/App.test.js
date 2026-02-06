@@ -2,15 +2,14 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-// Simple smoke test
-test('renders format button', () => {
+test('renders welcome message', () => {
   render(<App />);
-  const formatButton = screen.getByRole('button', { name: /format/i });
-  expect(formatButton).toBeInTheDocument();
+  const welcomeElement = screen.getByText(/Welcome to GuidedJSON/i);
+  expect(welcomeElement).toBeInTheDocument();
 });
 
-test('renders textarea for JSON input', () => {
+test('renders graph view button', () => {
   render(<App />);
-  const textareaElement = screen.getByPlaceholderText(/Paste your JSON here/i);
-  expect(textareaElement).toBeInTheDocument();
+  const graphButton = screen.getByText(/Graph/i);
+  expect(graphButton).toBeInTheDocument();
 });

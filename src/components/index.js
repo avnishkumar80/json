@@ -14,3 +14,4 @@ export { default as CompareView } from './CompareView';
 export { default as SchemaValidationModal } from './SchemaValidation/SchemaValidationModal';
 export { default as EmptyState } from './EmptyState/EmptyState';
 export { default as StatusBar } from './StatusBar/StatusBar';
+export { default as GraphVisualizer } from './GraphVisualizer/GraphVisualizer';

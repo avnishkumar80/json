@@ -9,7 +9,8 @@ import {
   CompareView,
   SchemaValidationModal,
   EmptyState,
-  StatusBar
+  StatusBar,
+  GraphVisualizer
 } from './components';
 import SimplifiedHeader from './components/Header/SimplifiedHeader';
 import SearchBar from './components/SearchBar/SearchBar';
@@ -475,7 +476,7 @@ const JsonFormatter = () => {
               currentSearchIndex={currentSearchIndex}
               onCursorChange={setCursorPosition}
             />
-          ) : (
+          ) : viewMode === VIEW_MODES.TREE ? (
             <TreeView
               jsonInput={jsonInput}
               error={error}
@@ -488,6 +489,11 @@ const JsonFormatter = () => {
               searchResults={searchResults}
               currentSearchIndex={currentSearchIndex}
               onSearchResultsUpdate={handleTreeSearchResultsUpdate}
+            />
+          ) : (
+            <GraphVisualizer
+              jsonInput={jsonInput}
+              darkMode={darkMode}
             />
           )}
         </div>
