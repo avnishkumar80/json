@@ -358,59 +358,6 @@ const DiffView = ({ leftJson, rightJson, darkMode, onClose, onBack, viewType, se
   );
 };
 
-const DiffMinimap = ({ diffBlocks, darkMode }) => {
-  const totalLines = diffBlocks.reduce((sum, block) => sum + block.count, 0);
-
-  const handleClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const percentage = y / rect.height;
-
-    // Find the scroll container (DiffPanel or InlineDiffView)
-    // We'll try to find the first one that exists
-    const container = document.querySelector('[id^="diff-panel-"]') || document.querySelector('.inline-diff-view');
-    if (container) {
-      container.scrollTop = percentage * container.scrollHeight;
-    }
-  };
-
-  return (
-    <div
-      onClick={handleClick}
-      style={{
-        width: '16px',
-        borderLeft: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-        backgroundColor: darkMode ? '#1f2937' : '#f9fafb',
-        flexShrink: 0,
-        position: 'relative',
-        cursor: 'pointer',
-        height: '100%'
-      }}
-    >
-      {diffBlocks.map((block, index) => {
-        // Calculate percentage height
-        const heightPercent = (block.count / totalLines) * 100;
-
-        let color = 'transparent';
-        if (block.added) color = darkMode ? '#22c55e' : '#4ade80';
-        if (block.removed) color = darkMode ? '#ef4444' : '#f87171';
-
-        return (
-          <div
-            key={index}
-            style={{
-              height: `${heightPercent}%`,
-              width: '100%',
-              backgroundColor: color,
-              opacity: 0.6
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-};
-
 const DiffGutter = ({ diffBlocks, darkMode }) => {
   const lineHeight = 24; // Must match DiffPanel line height
   let currentLine = 0;
