@@ -13,7 +13,9 @@ const TreeNode = ({
   searchResults = [],
   searchResultsMap,
   currentSearchIndex = -1,
-  searchQuery = ''
+  searchQuery = '',
+  selectedPath,
+  onSelectPath
 }) => {
   const isExpanded = expandedNodes.has(path);
   const isObject = typeof data === 'object' && data !== null;
@@ -83,6 +85,8 @@ const TreeNode = ({
     return <span>{parts}</span>;
   };
 
+  const isSelected = selectedPath === path;
+
   return (
     <div key={path} style={{ userSelect: 'text' }}>
       <div
@@ -96,11 +100,16 @@ const TreeNode = ({
           transition: 'background-color 0.2s',
           paddingLeft: `${level * 24 + 12}px`,
           color: darkMode ? '#d1d5db' : '#374151',
+          outline: isSelected ? `1px solid ${darkMode ? '#60a5fa' : '#2563eb'}` : 'none',
+          boxShadow: isSelected ? (darkMode ? '0 0 0 2px rgba(59,130,246,0.35)' : '0 0 0 2px rgba(37,99,235,0.2)') : 'none',
           backgroundColor: isCurrentMatch
             ? (darkMode ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.2)')
             : isMatch
               ? (darkMode ? 'rgba(251, 191, 36, 0.15)' : 'rgba(254, 243, 199, 0.4)')
               : 'transparent'
+        }}
+        onClick={() => {
+          if (onSelectPath && isObject) onSelectPath(path);
         }}
         onMouseEnter={(e) => {
           if (!isCurrentMatch && !isMatch) {
@@ -118,7 +127,10 @@ const TreeNode = ({
         {isObject ? (
           <>
             <button
-              onClick={() => onToggleNode(path)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleNode(path);
+              }}
               style={{
                 marginRight: '8px',
                 padding: '2px',
@@ -187,6 +199,8 @@ const TreeNode = ({
                 searchResultsMap={searchResultsMap}
                 currentSearchIndex={currentSearchIndex}
                 searchQuery={searchQuery}
+                selectedPath={selectedPath}
+                onSelectPath={onSelectPath}
               />
             )) :
             Object.entries(data).map(([childKey, childValue]) => (
@@ -203,6 +217,8 @@ const TreeNode = ({
                 searchResultsMap={searchResultsMap}
                 currentSearchIndex={currentSearchIndex}
                 searchQuery={searchQuery}
+                selectedPath={selectedPath}
+                onSelectPath={onSelectPath}
               />
             ))
           }

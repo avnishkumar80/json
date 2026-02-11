@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Upload, ArrowRight, X } from 'lucide-react';
+import { Upload, ArrowRight, ArrowRightLeft } from 'lucide-react';
+import JsonEditor from '../JsonEditor/JsonEditor';
 
-const CompareSetup = ({ onCompare, darkMode }) => {
-    const [leftJson, setLeftJson] = useState('');
+const CompareSetup = ({ onCompare, darkMode, currentInput }) => {
+    const [leftJson, setLeftJson] = useState(currentInput || '');
     const [rightJson, setRightJson] = useState('');
     const [leftError, setLeftError] = useState('');
     const [rightError, setRightError] = useState('');
@@ -45,27 +46,49 @@ const CompareSetup = ({ onCompare, darkMode }) => {
         onCompare(leftJson, rightJson);
     };
 
-    const InputPanel = ({ side, value, error, onChange, fileRef }) => (
+    const handleSwap = () => {
+        const tempJson = leftJson;
+        const tempError = leftError;
+        setLeftJson(rightJson);
+        setLeftError(rightError);
+        setRightJson(tempJson);
+        setRightError(tempError);
+    };
+
+    const canCompare = leftJson.trim() && rightJson.trim() && !leftError && !rightError;
+
+    const InputPanel = ({ side, value, error, fileRef }) => {
+        const hasValue = Boolean(value && value.trim());
+        const isValid = hasValue && !error;
+        const statusLabel = hasValue ? (isValid ? 'Valid JSON' : 'Invalid JSON') : 'Empty';
+
+        return (
         <div style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
-            padding: '20px',
             backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-            borderRadius: '12px',
+            borderRadius: '8px',
             border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
         }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{
-                    margin: 0,
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: darkMode ? '#e5e7eb' : '#374151'
-                }}>
-                    {side === 'left' ? 'Original JSON' : 'Modified JSON'}
-                </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 12px 0 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: darkMode ? '#9ca3af' : '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {side === 'left' ? 'Original' : 'Modified'}
+                    </div>
+                    <div style={{
+                        fontSize: '11px',
+                        padding: '2px 8px',
+                        borderRadius: '999px',
+                        backgroundColor: !hasValue ? (darkMode ? '#111827' : '#f3f4f6') : (isValid ? (darkMode ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7') : (darkMode ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2')),
+                        color: !hasValue ? (darkMode ? '#9ca3af' : '#6b7280') : (isValid ? (darkMode ? '#86efac' : '#15803d') : (darkMode ? '#fca5a5' : '#b91c1c')),
+                        border: `1px solid ${!hasValue ? (darkMode ? '#1f2937' : '#e5e7eb') : (isValid ? (darkMode ? 'rgba(34,197,94,0.4)' : '#86efac') : (darkMode ? 'rgba(239,68,68,0.4)' : '#fca5a5'))}`
+                    }}>
+                        {statusLabel}
+                    </div>
+                </div>
+
                 <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                         onClick={() => fileRef.current?.click()}
@@ -73,8 +96,8 @@ const CompareSetup = ({ onCompare, darkMode }) => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            padding: '6px 12px',
-                            fontSize: '13px',
+                            padding: '6px 10px',
+                            fontSize: '12px',
                             backgroundColor: darkMode ? '#374151' : '#f3f4f6',
                             color: darkMode ? '#e5e7eb' : '#374151',
                             border: 'none',
@@ -84,45 +107,47 @@ const CompareSetup = ({ onCompare, darkMode }) => {
                         }}
                     >
                         <Upload size={14} />
-                        Load File
+                        Load file
                     </button>
                     {value && (
                         <button
                             onClick={() => validateAndSet('', side)}
                             style={{
-                                padding: '6px',
-                                backgroundColor: 'transparent',
+                                padding: '6px 10px',
+                                backgroundColor: darkMode ? '#111827' : '#f9fafb',
                                 color: darkMode ? '#9ca3af' : '#6b7280',
-                                border: 'none',
+                                border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                                borderRadius: '6px',
                                 cursor: 'pointer'
                             }}
                         >
-                            <X size={16} />
+                            Clear
                         </button>
                     )}
                 </div>
             </div>
 
-            <div style={{ position: 'relative', flex: 1, minHeight: '300px' }}>
-                <textarea
-                    value={value}
-                    onChange={(e) => validateAndSet(e.target.value, side)}
-                    placeholder={`Paste ${side === 'left' ? 'original' : 'modified'} JSON here...`}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        padding: '16px',
-                        backgroundColor: darkMode ? '#111827' : '#f9fafb',
-                        color: darkMode ? '#e5e7eb' : '#111827',
-                        border: `1px solid ${error ? '#ef4444' : (darkMode ? '#374151' : '#d1d5db')}`,
-                        borderRadius: '8px',
-                        fontFamily: 'monospace',
-                        fontSize: '13px',
-                        resize: 'none',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                    }}
-                />
+            <div style={{ position: 'relative', flex: 1, minHeight: '300px', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, position: 'relative', border: `1px solid ${error ? '#ef4444' : (darkMode ? '#374151' : '#e5e7eb')}`, borderRadius: '8px', overflow: 'hidden' }}>
+                    <JsonEditor
+                        jsonInput={value}
+                        darkMode={darkMode}
+                        onInputChange={(e) => validateAndSet(e.target.value, side)}
+                        error={null} // We handle error display separately below to match design
+                    />
+                    {!hasValue && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '16px',
+                            left: '16px',
+                            color: darkMode ? '#6b7280' : '#9ca3af',
+                            fontSize: '12px',
+                            pointerEvents: 'none'
+                        }}>
+                            Paste JSON or load a file to compare.
+                        </div>
+                    )}
+                </div>
                 {error && (
                     <div style={{
                         position: 'absolute',
@@ -134,7 +159,9 @@ const CompareSetup = ({ onCompare, darkMode }) => {
                         color: '#ef4444',
                         borderRadius: '6px',
                         fontSize: '12px',
-                        backdropFilter: 'blur(4px)'
+                        backdropFilter: 'blur(4px)',
+                        zIndex: 20, // Ensure detailed error is above editor
+                        pointerEvents: 'none'
                     }}>
                         Invalid JSON: {error}
                     </div>
@@ -150,35 +177,60 @@ const CompareSetup = ({ onCompare, darkMode }) => {
             />
         </div>
     );
+    };
 
     return (
         <div style={{
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
-            padding: '24px',
-            gap: '24px',
-            maxWidth: '1200px',
-            margin: '0 auto',
+            padding: '16px',
+            gap: '16px',
+            maxWidth: '100%',
+            margin: '0',
             width: '100%'
         }}>
-            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-                <h2 style={{
-                    fontSize: '24px',
-                    fontWeight: '700',
-                    marginBottom: '8px',
-                    color: darkMode ? '#f3f4f6' : '#111827'
-                }}>
-                    Compare JSON
-                </h2>
-                <p style={{ color: darkMode ? '#9ca3af' : '#6b7280' }}>
-                    Paste or load two JSON files to see the differences
-                </p>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '4px 4px 0 4px'
+            }}>
+                <div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: darkMode ? '#f3f4f6' : '#111827' }}>
+                        Compare JSON
+                    </div>
+                    <div style={{ fontSize: '13px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+                        Paste or load two JSON documents to see differences.
+                    </div>
+                </div>
+                <button
+                    onClick={handleCompare}
+                    disabled={!canCompare}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 18px',
+                        backgroundColor: canCompare ? '#2563eb' : (darkMode ? '#374151' : '#e5e7eb'),
+                        color: canCompare ? '#ffffff' : (darkMode ? '#6b7280' : '#9ca3af'),
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: canCompare ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.2s',
+                        boxShadow: canCompare ? '0 4px 8px -2px rgba(37, 99, 235, 0.45)' : 'none'
+                    }}
+                >
+                    Compare
+                    <ArrowRight size={16} />
+                </button>
             </div>
 
             <div style={{
                 display: 'flex',
-                gap: '24px',
+                gap: '16px',
                 flex: 1,
                 minHeight: 0
             }}>
@@ -186,60 +238,67 @@ const CompareSetup = ({ onCompare, darkMode }) => {
                     side="left"
                     value={leftJson}
                     error={leftError}
-                    onChange={(val) => validateAndSet(val, 'left')}
                     fileRef={leftFileRef}
                 />
 
                 <div style={{
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    position: 'relative',
+                    width: '32px'
                 }}>
                     <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        left: '50%',
                         width: '1px',
-                        height: '100%',
-                        backgroundColor: darkMode ? '#374151' : '#e5e7eb'
+                        backgroundColor: darkMode ? '#374151' : '#e5e7eb',
+                        transform: 'translateX(-50%)'
                     }} />
+
+                    <button
+                        onClick={handleSwap}
+                        title="Swap (Switch sides)"
+                        style={{
+                            position: 'relative',
+                            zIndex: 10,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            border: `1px solid ${darkMode ? '#4b5563' : '#d1d5db'}`,
+                            backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                            color: darkMode ? '#e5e7eb' : '#374151',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.borderColor = darkMode ? '#60a5fa' : '#3b82f6';
+                            e.currentTarget.style.color = darkMode ? '#60a5fa' : '#3b82f6';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.borderColor = darkMode ? '#4b5563' : '#d1d5db';
+                            e.currentTarget.style.color = darkMode ? '#e5e7eb' : '#374151';
+                        }}
+                    >
+                        <ArrowRightLeft size={16} />
+                    </button>
                 </div>
 
                 <InputPanel
                     side="right"
                     value={rightJson}
                     error={rightError}
-                    onChange={(val) => validateAndSet(val, 'right')}
                     fileRef={rightFileRef}
                 />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'auto' }}>
-                <button
-                    onClick={handleCompare}
-                    disabled={!leftJson.trim() || !rightJson.trim()}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '12px 32px',
-                        backgroundColor: (!leftJson.trim() || !rightJson.trim())
-                            ? (darkMode ? '#374151' : '#e5e7eb')
-                            : '#3b82f6',
-                        color: (!leftJson.trim() || !rightJson.trim())
-                            ? (darkMode ? '#6b7280' : '#9ca3af')
-                            : '#ffffff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        cursor: (!leftJson.trim() || !rightJson.trim()) ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s',
-                        boxShadow: (!leftJson.trim() || !rightJson.trim())
-                            ? 'none'
-                            : '0 4px 6px -1px rgba(59, 130, 246, 0.5)'
-                    }}
-                >
-                    Compare JSONs
-                    <ArrowRight size={18} />
-                </button>
             </div>
         </div>
     );

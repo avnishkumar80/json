@@ -15,7 +15,9 @@ const TreeView = ({
   searchQuery,
   searchResults,
   currentSearchIndex,
-  onSearchResultsUpdate
+  onSearchResultsUpdate,
+  selectedPath,
+  onSelectPath
 }) => {
   // Parse JSON data
   const parsedData = useMemo(() => {
@@ -157,6 +159,8 @@ const TreeView = ({
           searchResultsMap={searchResultsMap}
           currentSearchIndex={currentSearchIndex}
           searchQuery={searchQuery}
+          selectedPath={selectedPath}
+          onSelectPath={onSelectPath}
         />
       </div>
 

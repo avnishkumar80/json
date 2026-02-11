@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Copy, Check, Columns, List, ArrowLeft } from 'lucide-react';
+import { Copy, Check, Columns, List, ArrowLeft } from 'lucide-react';
 import * as Diff from 'diff';
 import CompareSetup from './CompareSetup';
 
-const CompareView = ({ darkMode, onClose }) => {
+const CompareView = ({ darkMode, onClose, currentInput }) => {
   const [mode, setMode] = useState('SETUP'); // SETUP or DIFF
   const [leftJson, setLeftJson] = useState('');
   const [rightJson, setRightJson] = useState('');
@@ -26,44 +26,15 @@ const CompareView = ({ darkMode, onClose }) => {
   if (mode === 'SETUP') {
     return (
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: darkMode ? '#111827' : '#f9fafb',
-        zIndex: 50,
+        height: '100%',
+        width: '100%',
+        backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        overflow: 'hidden' // Ensure no scroll on main container
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          padding: '16px 24px',
-          borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-          backgroundColor: darkMode ? '#1f2937' : '#ffffff'
-        }}>
-          <button
-            onClick={onClose}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              backgroundColor: 'transparent',
-              border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-              borderRadius: '6px',
-              color: darkMode ? '#e5e7eb' : '#374151',
-              cursor: 'pointer',
-              fontSize: '13px'
-            }}
-          >
-            <X size={14} />
-            Close
-          </button>
-        </div>
-        <CompareSetup onCompare={handleCompare} darkMode={darkMode} />
+
+        <CompareSetup onCompare={handleCompare} darkMode={darkMode} currentInput={currentInput} />
       </div>
     );
   }
@@ -189,19 +160,16 @@ const DiffView = ({ leftJson, rightJson, darkMode, onClose, onBack, viewType, se
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: darkMode ? '#111827' : '#f9fafb',
-      zIndex: 50,
+      height: '100%',
+      width: '100%',
+      backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
       {/* Header */}
       <div style={{
-        height: '60px',
+        height: '56px',
         borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
         display: 'flex',
         alignItems: 'center',
@@ -210,7 +178,7 @@ const DiffView = ({ leftJson, rightJson, darkMode, onClose, onBack, viewType, se
         backgroundColor: darkMode ? '#1f2937' : '#ffffff',
         flexShrink: 0
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
           <button
             onClick={onBack}
             style={{
@@ -218,93 +186,33 @@ const DiffView = ({ leftJson, rightJson, darkMode, onClose, onBack, viewType, se
               alignItems: 'center',
               gap: '6px',
               padding: '6px 12px',
-              backgroundColor: 'transparent',
-              border: 'none',
+              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
+              border: `1px solid ${darkMode ? '#4b5563' : '#e5e7eb'}`,
+              borderRadius: '6px',
               color: darkMode ? '#e5e7eb' : '#374151',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: '500'
             }}
           >
-            <ArrowLeft size={16} />
-            Back to Setup
+            <ArrowLeft size={14} />
+            Setup
           </button>
-          <div style={{ width: '1px', height: '24px', backgroundColor: darkMode ? '#374151' : '#e5e7eb' }} />
-          <h2 style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            margin: 0,
-            color: darkMode ? '#f3f4f6' : '#111827'
-          }}>
-            Comparison Results
-          </h2>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '4px 12px',
-            backgroundColor: darkMode ? 'rgba(31, 41, 55, 0.5)' : 'rgba(243, 244, 246, 0.8)',
-            borderRadius: '16px',
-            fontSize: '13px',
-            fontWeight: '500'
-          }}>
-            <span style={{ color: '#22c55e' }}>+{comparison.additions} additions</span>
-            <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: darkMode ? '#4b5563' : '#d1d5db' }} />
-            <span style={{ color: '#ef4444' }}>-{comparison.deletions} deletions</span>
+
+          <div>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: darkMode ? '#f3f4f6' : '#111827' }}>
+              Compare Results
+            </div>
+            <div style={{ fontSize: '12px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+              <span style={{ color: '#22c55e', fontWeight: 600 }}>+{comparison.additions}</span>
+              <span style={{ margin: '0 6px', color: darkMode ? '#4b5563' : '#d1d5db' }}>|</span>
+              <span style={{ color: '#ef4444', fontWeight: 600 }}>-{comparison.deletions}</span>
+              <span style={{ marginLeft: '8px' }}>line changes</span>
+            </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Options */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => setIgnoreOrder(!ignoreOrder)}
-              style={{
-                fontSize: '12px',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: `1px solid ${ignoreOrder ? (darkMode ? '#3b82f6' : '#2563eb') : (darkMode ? '#374151' : '#e5e7eb')}`,
-                backgroundColor: ignoreOrder ? (darkMode ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : 'transparent',
-                color: ignoreOrder ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#9ca3af' : '#6b7280'),
-                cursor: 'pointer'
-              }}
-              title="Ignore Key Order"
-            >
-              Sort Keys
-            </button>
-            <button
-              onClick={() => setIgnoreCase(!ignoreCase)}
-              style={{
-                fontSize: '12px',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: `1px solid ${ignoreCase ? (darkMode ? '#3b82f6' : '#2563eb') : (darkMode ? '#374151' : '#e5e7eb')}`,
-                backgroundColor: ignoreCase ? (darkMode ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : 'transparent',
-                color: ignoreCase ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#9ca3af' : '#6b7280'),
-                cursor: 'pointer'
-              }}
-              title="Ignore Case"
-            >
-              Aa
-            </button>
-            <button
-              onClick={() => setFocusMode(!focusMode)}
-              style={{
-                fontSize: '12px',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: `1px solid ${focusMode ? (darkMode ? '#3b82f6' : '#2563eb') : (darkMode ? '#374151' : '#e5e7eb')}`,
-                backgroundColor: focusMode ? (darkMode ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : 'transparent',
-                color: focusMode ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#9ca3af' : '#6b7280'),
-                cursor: 'pointer'
-              }}
-              title="Show Changes Only"
-            >
-              Focus
-            </button>
-          </div>
-
-          {/* View Toggle */}
           <div style={{
             display: 'flex',
             backgroundColor: darkMode ? '#374151' : '#f3f4f6',
@@ -354,26 +262,64 @@ const DiffView = ({ leftJson, rightJson, darkMode, onClose, onBack, viewType, se
               Inline
             </button>
           </div>
+        </div>
+      </div>
 
+      <div style={{
+        height: '40px',
+        borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 24px',
+        backgroundColor: darkMode ? '#111827' : '#f9fafb',
+        flexShrink: 0
+      }}>
+        <div style={{ fontSize: '12px', fontWeight: 600, color: darkMode ? '#9ca3af' : '#6b7280' }}>
+          Filters
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={onClose}
+            onClick={() => setIgnoreOrder(!ignoreOrder)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-              border: 'none',
+              fontSize: '12px',
+              padding: '4px 10px',
               borderRadius: '6px',
-              color: darkMode ? '#e5e7eb' : '#374151',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'background-color 0.2s'
+              border: `1px solid ${ignoreOrder ? (darkMode ? '#3b82f6' : '#2563eb') : (darkMode ? '#374151' : '#e5e7eb')}`,
+              backgroundColor: ignoreOrder ? (darkMode ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : 'transparent',
+              color: ignoreOrder ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#9ca3af' : '#6b7280'),
+              cursor: 'pointer'
             }}
           >
-            <X size={16} />
-            Close
+            Sort keys
+          </button>
+          <button
+            onClick={() => setIgnoreCase(!ignoreCase)}
+            style={{
+              fontSize: '12px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              border: `1px solid ${ignoreCase ? (darkMode ? '#3b82f6' : '#2563eb') : (darkMode ? '#374151' : '#e5e7eb')}`,
+              backgroundColor: ignoreCase ? (darkMode ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : 'transparent',
+              color: ignoreCase ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#9ca3af' : '#6b7280'),
+              cursor: 'pointer'
+            }}
+          >
+            Ignore case
+          </button>
+          <button
+            onClick={() => setFocusMode(!focusMode)}
+            style={{
+              fontSize: '12px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              border: `1px solid ${focusMode ? (darkMode ? '#3b82f6' : '#2563eb') : (darkMode ? '#374151' : '#e5e7eb')}`,
+              backgroundColor: focusMode ? (darkMode ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff') : 'transparent',
+              color: focusMode ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#9ca3af' : '#6b7280'),
+              cursor: 'pointer'
+            }}
+          >
+            Changes only
           </button>
         </div>
       </div>
@@ -398,18 +344,10 @@ const DiffView = ({ leftJson, rightJson, darkMode, onClose, onBack, viewType, se
               type="modified"
               darkMode={darkMode}
             />
-            <DiffMinimap
-              diffBlocks={diffBlocks}
-              darkMode={darkMode}
-            />
           </div>
         ) : (
           <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
             <InlineDiffView
-              diffBlocks={diffBlocks}
-              darkMode={darkMode}
-            />
-            <DiffMinimap
               diffBlocks={diffBlocks}
               darkMode={darkMode}
             />
@@ -554,16 +492,16 @@ const highlightSyntax = (text, darkMode) => {
 
     if (part.startsWith('"')) {
       if (part.endsWith('":')) {
-        color = darkMode ? '#93c5fd' : '#2563eb'; // Keys (blue)
+        color = darkMode ? '#9cdcfe' : '#0451a5'; // Keys (Light Blue / Blue)
       } else {
-        color = darkMode ? '#86efac' : '#16a34a'; // Strings (green)
+        color = darkMode ? '#ce9178' : '#a31515'; // Strings (Orange / Red)
       }
     } else if (/true|false/.test(part)) {
-      color = darkMode ? '#fca5a5' : '#dc2626'; // Booleans (red)
+      color = darkMode ? '#569cd6' : '#0000ff'; // Booleans (Blue)
     } else if (/null/.test(part)) {
-      color = darkMode ? '#d8b4fe' : '#9333ea'; // Null (purple)
+      color = darkMode ? '#569cd6' : '#0000ff'; // Null (Blue)
     } else if (/^-?\d/.test(part)) {
-      color = darkMode ? '#fdba74' : '#ea580c'; // Numbers (orange)
+      color = darkMode ? '#b5cea8' : '#098658'; // Numbers (Green)
     }
 
     return <span key={i} style={{ color }}>{part}</span>;
@@ -634,8 +572,8 @@ const DiffPanel = ({ title, diffBlocks, type, darkMode }) => {
                 display: 'flex',
                 height: '24px',
                 lineHeight: '24px',
-                fontFamily: 'monospace',
-                fontSize: '13px'
+                fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
+                fontSize: '14px'
               }}>
                 <div style={{
                   width: '48px',
@@ -677,9 +615,10 @@ const DiffPanel = ({ title, diffBlocks, type, darkMode }) => {
         alignItems: 'center',
         fontSize: '13px',
         fontWeight: '600',
-        color: darkMode ? '#e5e7eb' : '#374151'
+        color: darkMode ? '#e5e7eb' : '#374151',
+        height: '32px' // Compact panel header
       }}>
-        <span>{title}</span>
+        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</span>
         <button
           onClick={handleCopy}
           style={{
@@ -753,8 +692,8 @@ const InlineDiffView = ({ diffBlocks, darkMode }) => {
               display: 'flex',
               height: '24px',
               lineHeight: '24px',
-              fontFamily: 'monospace',
-              fontSize: '13px',
+              fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", monospace',
+              fontSize: '14px',
               backgroundColor: bgColor
             }}>
               <div style={{

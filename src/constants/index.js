@@ -5,7 +5,8 @@
 export const VIEW_MODES = {
   EDITOR: 'editor',
   TREE: 'tree',
-  GRAPH: 'graph'
+  GRAPH: 'graph',
+  COMPARE: 'compare'
 };
 
 export const THEMES = {

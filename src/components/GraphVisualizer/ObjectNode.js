@@ -11,18 +11,20 @@ const colors = {
 
 
 const ObjectNode = ({ data, isConnectable }) => {
-    const { label, properties = [] } = data;
+    const { label, properties = [], isSelected } = data;
 
     return (
         <div style={{
             background: '#1f2937', // gray-800
             color: '#f3f4f6',      // gray-100
             borderRadius: '8px',
-            border: '1px solid #374151', // gray-700
+            border: isSelected ? '2px solid #60a5fa' : '1px solid #374151', // gray-700
             minWidth: '200px',
             fontSize: '12px',
             fontFamily: 'monospace',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+            boxShadow: isSelected
+                ? '0 0 0 3px rgba(59, 130, 246, 0.35), 0 8px 16px -4px rgba(0, 0, 0, 0.4)'
+                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
         }}>
             <Handle
                 type="target"

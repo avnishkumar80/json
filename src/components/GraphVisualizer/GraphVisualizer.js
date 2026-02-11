@@ -51,6 +51,10 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
                 x: nodeWithPosition.x - nodeWidth / 2,
                 y: nodeWithPosition.y - height / 2,
             },
+            data: {
+                ...node.data,
+                height
+            }
         };
     });
 
@@ -62,7 +66,7 @@ const processJsonToGraph = (data, direction = 'LR') => {
     const edges = [];
     let idCounter = 0;
 
-    const traverse = (obj, parentId = null, edgeLabel = '') => {
+    const traverse = (obj, parentId = null, edgeLabel = '', path = '') => {
         const currentId = `n-${idCounter++}`;
         const isObject = typeof obj === 'object' && obj !== null;
         const isArray = Array.isArray(obj);
@@ -91,7 +95,7 @@ const processJsonToGraph = (data, direction = 'LR') => {
         nodes.push({
             id: currentId,
             type: 'objectNode',
-            data: { label, properties },
+            data: { label, properties, path },
             position: { x: 0, y: 0 },
         });
 
@@ -117,16 +121,19 @@ const processJsonToGraph = (data, direction = 'LR') => {
             if (isArray) {
                 obj.forEach((item, index) => {
                     if (typeof item === 'object' && item !== null) {
-                        traverse(item, currentId, `[${index}]`);
+                        const childPath = path ? `${path}.[${index}]` : `[${index}]`;
+                        traverse(item, currentId, `[${index}]`, childPath);
                     } else {
                         // Create a primitive node for array items if they are not objects
-                        traverse(item, currentId, `[${index}]`);
+                        const childPath = path ? `${path}.[${index}]` : `[${index}]`;
+                        traverse(item, currentId, `[${index}]`, childPath);
                     }
                 });
             } else {
                 Object.entries(obj).forEach(([key, value]) => {
                     if (typeof value === 'object' && value !== null) {
-                        traverse(value, currentId, key);
+                        const childPath = path ? `${path}.${key}` : key;
+                        traverse(value, currentId, key, childPath);
                     }
                 });
             }
@@ -135,7 +142,7 @@ const processJsonToGraph = (data, direction = 'LR') => {
 
     try {
         const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-        traverse(parsed);
+        traverse(parsed, null, '', '');
     } catch (e) {
         console.error("Failed to parse JSON for graph", e);
         return { nodes: [], edges: [] };
@@ -144,11 +151,21 @@ const processJsonToGraph = (data, direction = 'LR') => {
     return getLayoutedElements(nodes, edges, direction);
 };
 
-const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar }) => {
+const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, selectedPath }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [direction, setDirection] = useState('LR');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const rfInstanceRef = React.useRef(null);
+    const fitRafRef = React.useRef(null);
+
+    const scheduleFitView = React.useCallback(() => {
+        if (!rfInstanceRef.current) return;
+        if (fitRafRef.current) cancelAnimationFrame(fitRafRef.current);
+        fitRafRef.current = requestAnimationFrame(() => {
+            rfInstanceRef.current.fitView({ padding: 0.2, duration: 200 });
+        });
+    }, []);
 
     React.useEffect(() => {
         if (jsonInput) {
@@ -157,6 +174,38 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar }
             setEdges(layoutedEdges);
         }
     }, [jsonInput, direction, setNodes, setEdges]);
+
+    React.useEffect(() => {
+        if (!nodes.length) return;
+        scheduleFitView();
+
+        return () => {
+            if (fitRafRef.current) cancelAnimationFrame(fitRafRef.current);
+        };
+    }, [nodes.length, direction, scheduleFitView]);
+
+    React.useEffect(() => {
+        if (selectedPath === null || selectedPath === undefined) return;
+        setNodes((nds) =>
+            nds.map((node) => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    isSelected: node.data.path === selectedPath
+                }
+            }))
+        );
+
+        if (rfInstanceRef.current) {
+            const target = rfInstanceRef.current.getNodes().find((n) => n.data?.path === selectedPath);
+            if (target) {
+                const height = target.data?.height || 80;
+                const centerX = target.position.x + (nodeWidth / 2);
+                const centerY = target.position.y + (height / 2);
+                rfInstanceRef.current.setCenter(centerX, centerY, { zoom: 1.1, duration: 250 });
+            }
+        }
+    }, [selectedPath, nodes.length, setNodes]);
 
     // Helper to process with direction
     // Modifying processJsonToGraph to accept direction is needed, 
@@ -298,7 +347,9 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar }
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 nodeTypes={nodeTypes}
-                fitView
+                onInit={(instance) => {
+                    rfInstanceRef.current = instance;
+                }}
                 minZoom={0.1}
                 attributionPosition="bottom-right"
                 colorMode="dark"

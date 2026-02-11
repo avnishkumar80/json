@@ -41,6 +41,7 @@ const JsonFormatter = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, col: 1 });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedGraphPath, setSelectedGraphPath] = useState(null);
   // Refs
   const textareaRef = useRef(null);
 
@@ -174,6 +175,7 @@ const JsonFormatter = () => {
     setCurrentFileName('');
     setHasUnsavedChanges(false);
     setLastSavedContent('');
+    setViewMode(VIEW_MODES.EDITOR);
     clearSearch();
     textareaRef.current?.focus();
   };
@@ -319,15 +321,7 @@ const JsonFormatter = () => {
     }
   }, [checkUnsavedChanges, setCurrentFileName]);
 
-  // Show compare view
-  if (viewMode === 'compare') {
-    return (
-      <CompareView
-        darkMode={darkMode}
-        onClose={() => setViewMode(VIEW_MODES.EDITOR)}
-      />
-    );
-  }
+
 
   return (
     <div style={{
@@ -432,7 +426,15 @@ const JsonFormatter = () => {
           minHeight: 0,
           overflow: 'hidden'
         }}>
-          {!jsonInput.trim() ? (
+          {viewMode === VIEW_MODES.COMPARE ? (
+            <div style={{ height: '100%', overflow: 'hidden' }}>
+              <CompareView
+                darkMode={darkMode}
+                onClose={() => setViewMode(VIEW_MODES.EDITOR)}
+                currentInput={jsonInput}
+              />
+            </div>
+          ) : !jsonInput.trim() ? (
             <EmptyState
               darkMode={darkMode}
               onPaste={async () => {
@@ -479,32 +481,39 @@ const JsonFormatter = () => {
               searchResults={searchResults}
               currentSearchIndex={currentSearchIndex}
               onSearchResultsUpdate={handleTreeSearchResultsUpdate}
+              selectedPath={selectedGraphPath}
+              onSelectPath={setSelectedGraphPath}
             />
           ) : (
             // Graph Mode with Split View
             <div style={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
-              {/* Left Side: Editor */}
-              <div style={{
-                width: isSidebarOpen ? '40%' : '0%',
-                minWidth: isSidebarOpen ? '300px' : '0',
-                borderRight: isSidebarOpen ? `1px solid ${darkMode ? '#374151' : '#e5e7eb'}` : 'none',
-                overflow: 'hidden',
-                transition: 'width 0.3s ease, min-width 0.3s ease',
-                visibility: isSidebarOpen ? 'visible' : 'hidden'
-              }}>
-                <JsonEditor
-                  jsonInput={jsonInput}
-                  error={error}
-                  darkMode={darkMode}
-                  copied={copied}
-                  textareaRef={textareaRef}
-                  onInputChange={handleInputChange}
-                  onCopyToClipboard={copyToClipboard}
-                  searchResults={searchResults}
-                  currentSearchIndex={currentSearchIndex}
-                  onCursorChange={setCursorPosition}
-                />
-              </div>
+              {/* Left Side: TreeView */}
+              {isSidebarOpen && (
+                <div style={{
+                  width: '40%',
+                  minWidth: '300px',
+                  borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <TreeView
+                    jsonInput={jsonInput}
+                    error={error}
+                    darkMode={darkMode}
+                    copied={copied}
+                    expandedNodes={expandedNodes}
+                    onToggleNode={toggleNode}
+                    onCopyToClipboard={copyToClipboard}
+                    searchQuery={searchQuery}
+                    searchResults={searchResults}
+                    currentSearchIndex={currentSearchIndex}
+                    onSearchResultsUpdate={handleTreeSearchResultsUpdate}
+                    selectedPath={selectedGraphPath}
+                    onSelectPath={setSelectedGraphPath}
+                  />
+                </div>
+              )}
 
               {/* Right Side: Graph */}
               <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
@@ -513,6 +522,7 @@ const JsonFormatter = () => {
                   darkMode={darkMode}
                   isSidebarOpen={isSidebarOpen}
                   onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                  selectedPath={selectedGraphPath}
                 />
               </div>
             </div>
