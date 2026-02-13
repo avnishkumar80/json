@@ -12,6 +12,7 @@ import '@xyflow/react/dist/style.css';
 
 import ObjectNode from './ObjectNode';
 import { Menu, RotateCw, PanelLeftClose, PanelLeftOpen, Download } from 'lucide-react';
+import { vscodeDark } from '../../utils/vscodeTheme';
 
 const nodeWidth = 250; // Increased width for better readability
 
@@ -61,10 +62,10 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
     return { nodes: layoutedNodes, edges };
 };
 
-const processJsonToGraph = (data, direction = 'LR') => {
-    const nodes = [];
-    const edges = [];
-    let idCounter = 0;
+const processJsonToGraph = (data, direction = 'LR', useVscodeDark = false) => {
+  const nodes = [];
+  const edges = [];
+  let idCounter = 0;
 
     const traverse = (obj, parentId = null, edgeLabel = '', path = '') => {
         const currentId = `n-${idCounter++}`;
@@ -95,7 +96,7 @@ const processJsonToGraph = (data, direction = 'LR') => {
         nodes.push({
             id: currentId,
             type: 'objectNode',
-            data: { label, properties, path },
+            data: { label, properties, path, useVscodeTheme: useVscodeDark },
             position: { x: 0, y: 0 },
         });
 
@@ -106,12 +107,12 @@ const processJsonToGraph = (data, direction = 'LR') => {
                 target: currentId,
                 label: edgeLabel,
                 type: 'default', // Bezier
-                style: { stroke: '#4b5563' },
-                labelStyle: { fill: '#9ca3af', fontSize: 11 },
-                labelBgStyle: { fill: '#1f2937', fillOpacity: 0.8, rx: 4, ry: 4 },
+                style: { stroke: useVscodeDark ? '#5a5a5a' : '#4b5563' },
+                labelStyle: { fill: useVscodeDark ? '#d4d4d4' : '#9ca3af', fontSize: 11 },
+                labelBgStyle: { fill: useVscodeDark ? '#252526' : '#1f2937', fillOpacity: useVscodeDark ? 0.9 : 0.8, rx: 4, ry: 4 },
                 markerEnd: {
                     type: MarkerType.ArrowClosed,
-                    color: '#4b5563',
+                    color: useVscodeDark ? '#5a5a5a' : '#4b5563',
                 },
                 animated: false,
             });
@@ -151,13 +152,14 @@ const processJsonToGraph = (data, direction = 'LR') => {
     return getLayoutedElements(nodes, edges, direction);
 };
 
-const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, selectedPath }) => {
+const GraphVisualizer = ({ jsonInput, darkMode, useVscodeTheme, isSidebarOpen, onToggleSidebar, selectedPath }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [direction, setDirection] = useState('LR');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const rfInstanceRef = React.useRef(null);
     const fitRafRef = React.useRef(null);
+    const useVscodeDark = darkMode && useVscodeTheme;
 
     const scheduleFitView = React.useCallback(() => {
         if (!rfInstanceRef.current) return;
@@ -169,11 +171,11 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
 
     React.useEffect(() => {
         if (jsonInput) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = processJsonToGraph(jsonInput, direction);
+            const { nodes: layoutedNodes, edges: layoutedEdges } = processJsonToGraph(jsonInput, direction, useVscodeDark);
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
         }
-    }, [jsonInput, direction, setNodes, setEdges]);
+    }, [jsonInput, direction, useVscodeDark, setNodes, setEdges]);
 
     React.useEffect(() => {
         if (!nodes.length) return;
@@ -229,7 +231,13 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
     };
 
     return (
-        <div style={{ height: '100%', width: '100%', backgroundColor: '#111827', position: 'relative' }}>
+        <div style={{
+            height: '100%',
+            width: '100%',
+            backgroundColor: useVscodeDark ? vscodeDark.bg : '#111827',
+            position: 'relative',
+            fontFamily: useVscodeDark ? '"JetBrains Mono", "Fira Code", "Consolas", monospace' : 'inherit'
+        }}>
             {/* Floating Menu */}
             <div style={{
                 position: 'absolute',
@@ -245,10 +253,10 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
                     onClick={onToggleSidebar}
                     style={{
                         padding: '8px',
-                        backgroundColor: '#1f2937',
-                        border: '1px solid #374151',
+                        backgroundColor: useVscodeDark ? vscodeDark.panel : '#1f2937',
+                        border: `1px solid ${useVscodeDark ? vscodeDark.border : '#374151'}`,
                         borderRadius: '6px',
-                        color: '#f3f4f6',
+                        color: useVscodeDark ? vscodeDark.text : '#f3f4f6',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -265,10 +273,10 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         style={{
                             padding: '8px',
-                            backgroundColor: '#1f2937',
-                            border: '1px solid #374151',
+                            backgroundColor: useVscodeDark ? vscodeDark.panel : '#1f2937',
+                            border: `1px solid ${useVscodeDark ? vscodeDark.border : '#374151'}`,
                             borderRadius: '6px',
-                            color: '#f3f4f6',
+                            color: useVscodeDark ? vscodeDark.text : '#f3f4f6',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -285,8 +293,8 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
                             top: '100%',
                             left: '0',
                             marginTop: '8px',
-                            backgroundColor: '#1f2937',
-                            border: '1px solid #374151',
+                            backgroundColor: useVscodeDark ? vscodeDark.panel : '#1f2937',
+                            border: `1px solid ${useVscodeDark ? vscodeDark.border : '#374151'}`,
                             borderRadius: '8px',
                             padding: '4px',
                             display: 'flex',
@@ -303,7 +311,7 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
                                     alignItems: 'center',
                                     gap: '8px',
                                     padding: '8px 12px',
-                                    color: '#d1d5db',
+                                    color: useVscodeDark ? vscodeDark.text : '#d1d5db',
                                     backgroundColor: 'transparent',
                                     border: 'none',
                                     cursor: 'pointer',
@@ -322,7 +330,7 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
                                     alignItems: 'center',
                                     gap: '8px',
                                     padding: '8px 12px',
-                                    color: '#d1d5db',
+                                    color: useVscodeDark ? vscodeDark.muted : '#9ca3af',
                                     backgroundColor: 'transparent',
                                     border: 'none',
                                     cursor: 'pointer',
@@ -355,7 +363,7 @@ const GraphVisualizer = ({ jsonInput, darkMode, isSidebarOpen, onToggleSidebar, 
                 colorMode="dark"
             >
                 <Controls />
-                <Background color="#374151" gap={20} size={1} />
+                <Background color={useVscodeDark ? '#2a2a2a' : '#374151'} gap={20} size={1} />
             </ReactFlow>
         </div>
     );

@@ -5,6 +5,7 @@ const SimplifiedEditor = ({
   jsonInput,
   error,
   darkMode,
+  useVscodeTheme,
   textareaRef,
   onInputChange,
   searchResults,
@@ -15,6 +16,7 @@ const SimplifiedEditor = ({
   onApplyAllFixes,
   onDismissAutoFix
 }) => {
+  const useVscodeDark = darkMode && useVscodeTheme;
   const getHighlightedText = () => {
     if (!searchResults.length || !jsonInput) return jsonInput;
     
@@ -140,9 +142,9 @@ const SimplifiedEditor = ({
               style={{
                 fontSize: '14px',
                 lineHeight: '20px',
-                color: darkMode ? '#64748b' : '#94a3b8',
+                color: useVscodeDark ? '#9da0a6' : (darkMode ? '#64748b' : '#94a3b8'),
                 textAlign: 'right',
-                fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace'
+                fontFamily: useVscodeDark ? '"JetBrains Mono", "Fira Code", "Consolas", monospace' : 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace'
               }}
             >
               {index + 1}
@@ -159,13 +161,13 @@ const SimplifiedEditor = ({
           style={{
             flex: 1,
             backgroundColor: 'transparent',
-            color: darkMode ? '#f1f5f9' : '#1e293b',
+            color: useVscodeDark ? '#d4d4d4' : (darkMode ? '#f1f5f9' : '#1e293b'),
             border: 'none',
             outline: 'none',
             resize: 'none',
             fontSize: '14px',
             lineHeight: '20px',
-            fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+            fontFamily: useVscodeDark ? '"JetBrains Mono", "Fira Code", "Consolas", monospace' : 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
             padding: 0
           }}
           spellCheck={false}

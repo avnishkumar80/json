@@ -13,6 +13,8 @@ const SettingsModal = ({
   showSettings,
   onClose,
   darkMode,
+  useVscodeTheme,
+  onToggleVscodeTheme,
   indentSize,
   setIndentSize,
   loadSample,
@@ -274,6 +276,38 @@ const SettingsModal = ({
             }}>
               Editor Settings
             </h3>
+
+            {/* Theme Style */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+              backgroundColor: darkMode ? '#111827' : '#f9fafb',
+              marginBottom: '16px'
+            }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: darkMode ? '#f3f4f6' : '#374151' }}>
+                  VSCode dark theme
+                </div>
+                <div style={{ fontSize: '12px', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+                  Applies to Editor, Tree, and Graph in dark mode.
+                </div>
+              </div>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(useVscodeTheme)}
+                  onChange={onToggleVscodeTheme}
+                />
+                <span style={{ fontSize: '13px', color: darkMode ? '#e5e7eb' : '#374151' }}>
+                  {useVscodeTheme ? 'On' : 'Off'}
+                </span>
+              </label>
+            </div>
             
             {/* Indent Size */}
             <div>

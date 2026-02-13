@@ -2,11 +2,13 @@ import React, { useEffect, useMemo } from 'react';
 import { Copy, Check } from 'lucide-react';
 import TreeNode from './TreeNode';
 import { searchInTree, getParentPaths } from '../../utils/treeSearchUtils';
+import { vscodeDark } from '../../utils/vscodeTheme';
 
 const TreeView = ({
   jsonInput,
   error,
   darkMode,
+  useVscodeTheme,
   copied,
   expandedNodes,
   onToggleNode,
@@ -19,6 +21,7 @@ const TreeView = ({
   selectedPath,
   onSelectPath
 }) => {
+  const useVscodeDark = darkMode && useVscodeTheme;
   // Parse JSON data
   const parsedData = useMemo(() => {
     try {
@@ -106,7 +109,7 @@ const TreeView = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: darkMode ? '#9ca3af' : '#6b7280',
+        color: useVscodeDark ? vscodeDark.muted : (darkMode ? '#9ca3af' : '#6b7280'),
         fontSize: '16px'
       }}>
         {error ? 'Fix JSON errors to view tree' : 'Enter valid JSON to see tree view'}
@@ -121,7 +124,7 @@ const TreeView = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: darkMode ? '#9ca3af' : '#6b7280',
+        color: useVscodeDark ? vscodeDark.muted : (darkMode ? '#9ca3af' : '#6b7280'),
         fontSize: '16px'
       }}>
         Invalid JSON format
@@ -134,12 +137,13 @@ const TreeView = ({
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: darkMode ? '#111827' : '#ffffff',
+      backgroundColor: useVscodeDark ? vscodeDark.bg : (darkMode ? '#111827' : '#ffffff'),
       borderRadius: '8px',
-      border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+      border: `1px solid ${useVscodeDark ? vscodeDark.border : (darkMode ? '#374151' : '#e5e7eb')}`,
       minHeight: 0,
       overflow: 'hidden',
-      position: 'relative'
+      position: 'relative',
+      fontFamily: useVscodeDark ? '"JetBrains Mono", "Fira Code", "Consolas", monospace' : 'inherit'
     }}>
       {/* Tree Content - Scrollable */}
       <div style={{
@@ -153,6 +157,7 @@ const TreeView = ({
           nodeKey="root"
           path=""
           darkMode={darkMode}
+          useVscodeTheme={useVscodeTheme}
           expandedNodes={expandedNodes}
           onToggleNode={onToggleNode}
           searchResults={treeSearchResults}
@@ -175,8 +180,8 @@ const TreeView = ({
           border: 'none',
           borderRadius: '8px',
           cursor: 'pointer',
-          backgroundColor: copied ? '#10b981' : (darkMode ? '#374151' : '#ffffff'),
-          color: copied ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
+          backgroundColor: copied ? '#10b981' : (useVscodeDark ? vscodeDark.panel : (darkMode ? '#374151' : '#ffffff')),
+          color: copied ? 'white' : (useVscodeDark ? vscodeDark.text : (darkMode ? '#d1d5db' : '#374151')),
           fontSize: '13px',
           fontWeight: '600',
           transition: 'all 0.2s',

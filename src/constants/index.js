@@ -15,7 +15,8 @@ export const THEMES = {
 };
 
 export const STORAGE_KEYS = {
-  THEME: 'json-formatter-theme'
+  THEME: 'json-formatter-theme',
+  VSCODE_THEME: 'json-formatter-vscode-theme'
 };
 
 export const DEFAULT_SETTINGS = {

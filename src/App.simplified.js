@@ -7,7 +7,7 @@ import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 import { validateJson, formatJson, minifyJson } from './utils/jsonUtils';
 import { analyzeJsonErrors, applySingleFix, applyAllFixes } from './utils/jsonAutoFix';
 import { trackEvent } from './utils/analytics';
-import { SAMPLE_JSON, DEFAULT_SETTINGS, VIEW_MODES } from './constants';
+import { SAMPLE_JSON, DEFAULT_SETTINGS, VIEW_MODES, STORAGE_KEYS } from './constants';
 import SimplifiedHeader from './components/SimplifiedHeader/SimplifiedHeader';
 import SimplifiedEditor from './components/SimplifiedEditor/SimplifiedEditor';
 import SimplifiedToolbar from './components/SimplifiedToolbar/SimplifiedToolbar';
@@ -25,6 +25,7 @@ const SimplifiedJsonFormatter = () => {
   const [autoFixSuggestions, setAutoFixSuggestions] = useState([]);
   const [showAutoFix, setShowAutoFix] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [useVscodeTheme, setUseVscodeTheme] = useState(false);
 
   // Refs
   const textareaRef = useRef(null);
@@ -33,6 +34,17 @@ const SimplifiedJsonFormatter = () => {
   const { darkMode, toggleTheme } = useTheme();
   const { hasUnsavedChanges, setHasUnsavedChanges, setLastSavedContent, checkUnsavedChanges } = useUnsavedChanges();
   const { expandedNodes, toggleNode, expandAll, collapseAll } = useTreeView();
+
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.VSCODE_THEME);
+    if (savedTheme !== null) {
+      setUseVscodeTheme(savedTheme === 'true');
+    }
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.VSCODE_THEME, String(useVscodeTheme));
+  }, [useVscodeTheme]);
   
   const {
     searchQuery,
@@ -245,6 +257,7 @@ const SimplifiedJsonFormatter = () => {
             jsonInput={jsonInput}
             error={error}
             darkMode={darkMode}
+            useVscodeTheme={useVscodeTheme}
             textareaRef={textareaRef}
             onInputChange={handleInputChange}
             searchResults={searchResults}
@@ -260,6 +273,7 @@ const SimplifiedJsonFormatter = () => {
             jsonInput={jsonInput}
             error={error}
             darkMode={darkMode}
+            useVscodeTheme={useVscodeTheme}
             expandedNodes={expandedNodes}
             onToggleNode={toggleNode}
             onExpandAll={() => expandAll(jsonInput)}
@@ -333,6 +347,16 @@ const SimplifiedJsonFormatter = () => {
             width: '90%'
           }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Settings</h3>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(useVscodeTheme)}
+                  onChange={() => setUseVscodeTheme((prev) => !prev)}
+                />
+                <span>VSCode dark theme (Editor/Tree/Graph)</span>
+              </label>
+            </div>
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px' }}>
                 Indent Size: {indentSize}

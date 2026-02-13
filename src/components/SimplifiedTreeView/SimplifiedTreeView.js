@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
 import { ChevronRight, ChevronDown, Maximize2, Minimize2 } from 'lucide-react';
 import { validateJson } from '../../utils/jsonUtils';
+import { vscodeDark, vscodeTokens } from '../../utils/vscodeTheme';
 
 const SimplifiedTreeView = ({
   jsonInput,
   error,
   darkMode,
+  useVscodeTheme,
   expandedNodes,
   onToggleNode,
   onExpandAll,
@@ -14,6 +16,7 @@ const SimplifiedTreeView = ({
   searchResults,
   currentSearchIndex
 }) => {
+  const useVscodeDark = darkMode && useVscodeTheme;
   const parsedJson = useMemo(() => {
     if (!jsonInput || error) return null;
     const validation = validateJson(jsonInput);
@@ -26,11 +29,11 @@ const SimplifiedTreeView = ({
   }, [jsonInput, error]);
 
   const renderValue = (value, path = '') => {
-    if (value === null) return <span style={{ color: '#ef4444' }}>null</span>;
-    if (value === undefined) return <span style={{ color: '#ef4444' }}>undefined</span>;
-    if (typeof value === 'boolean') return <span style={{ color: '#3b82f6' }}>{String(value)}</span>;
-    if (typeof value === 'number') return <span style={{ color: '#10b981' }}>{value}</span>;
-    if (typeof value === 'string') return <span style={{ color: '#f59e0b' }}>"{value}"</span>;
+    if (value === null) return <span style={{ color: useVscodeDark ? vscodeTokens.null : (darkMode ? '#ef4444' : '#ef4444') }}>null</span>;
+    if (value === undefined) return <span style={{ color: useVscodeDark ? vscodeTokens.null : (darkMode ? '#ef4444' : '#ef4444') }}>undefined</span>;
+    if (typeof value === 'boolean') return <span style={{ color: useVscodeDark ? vscodeTokens.boolean : (darkMode ? '#3b82f6' : '#3b82f6') }}>{String(value)}</span>;
+    if (typeof value === 'number') return <span style={{ color: useVscodeDark ? vscodeTokens.number : (darkMode ? '#10b981' : '#10b981') }}>{value}</span>;
+    if (typeof value === 'string') return <span style={{ color: useVscodeDark ? vscodeTokens.string : (darkMode ? '#f59e0b' : '#f59e0b') }}>"{value}"</span>;
     
     if (Array.isArray(value)) {
       const isExpanded = expandedNodes[path];
@@ -41,7 +44,7 @@ const SimplifiedTreeView = ({
             style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center' }}
           >
             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            <span style={{ color: darkMode ? '#94a3b8' : '#64748b', marginLeft: '4px' }}>
+            <span style={{ color: useVscodeDark ? vscodeDark.muted : (darkMode ? '#94a3b8' : '#64748b'), marginLeft: '4px' }}>
               Array[{value.length}]
             </span>
           </span>
@@ -49,7 +52,7 @@ const SimplifiedTreeView = ({
             <div style={{ marginLeft: '20px', marginTop: '4px' }}>
               {value.map((item, index) => (
                 <div key={index} style={{ marginBottom: '2px' }}>
-                  <span style={{ color: darkMode ? '#64748b' : '#94a3b8', marginRight: '8px' }}>
+                  <span style={{ color: useVscodeDark ? vscodeDark.muted : (darkMode ? '#64748b' : '#94a3b8'), marginRight: '8px' }}>
                     {index}:
                   </span>
                   {renderValue(item, `${path}.${index}`)}
@@ -71,7 +74,7 @@ const SimplifiedTreeView = ({
             style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center' }}
           >
             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            <span style={{ color: darkMode ? '#94a3b8' : '#64748b', marginLeft: '4px' }}>
+            <span style={{ color: useVscodeDark ? vscodeDark.muted : (darkMode ? '#94a3b8' : '#64748b'), marginLeft: '4px' }}>
               Object{keys.length > 0 ? ` {${keys.length}}` : ''}
             </span>
           </span>
@@ -79,7 +82,7 @@ const SimplifiedTreeView = ({
             <div style={{ marginLeft: '20px', marginTop: '4px' }}>
               {keys.map((key) => (
                 <div key={key} style={{ marginBottom: '2px' }}>
-                  <span style={{ color: '#a78bfa', marginRight: '8px' }}>
+                  <span style={{ color: useVscodeDark ? vscodeTokens.key : '#a78bfa', marginRight: '8px' }}>
                     "{key}":
                   </span>
                   {renderValue(value[key], `${path}.${key}`)}
@@ -120,7 +123,7 @@ const SimplifiedTreeView = ({
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px',
-        color: darkMode ? '#64748b' : '#94a3b8'
+        color: useVscodeDark ? vscodeDark.muted : (darkMode ? '#64748b' : '#94a3b8')
       }}>
         <p>Enter valid JSON to see the tree view</p>
       </div>
@@ -132,25 +135,26 @@ const SimplifiedTreeView = ({
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      fontFamily: useVscodeDark ? '"JetBrains Mono", "Fira Code", "Consolas", monospace' : 'inherit'
     }}>
       {/* Tree Actions Bar */}
       <div style={{
         padding: '8px 16px',
-        borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+        borderBottom: `1px solid ${useVscodeDark ? vscodeDark.border : (darkMode ? '#334155' : '#e2e8f0')}`,
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        backgroundColor: darkMode ? '#0f172a' : '#f8fafc'
+        backgroundColor: useVscodeDark ? vscodeDark.panel : (darkMode ? '#0f172a' : '#f8fafc')
       }}>
         <button
           onClick={onExpandAll}
           style={{
             padding: '4px 8px',
             backgroundColor: 'transparent',
-            border: `1px solid ${darkMode ? '#475569' : '#cbd5e1'}`,
+            border: `1px solid ${useVscodeDark ? vscodeDark.border : (darkMode ? '#475569' : '#cbd5e1')}`,
             borderRadius: '4px',
-            color: darkMode ? '#e2e8f0' : '#475569',
+            color: useVscodeDark ? vscodeDark.text : (darkMode ? '#e2e8f0' : '#475569'),
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -159,7 +163,7 @@ const SimplifiedTreeView = ({
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = darkMode ? '#1e293b' : '#ffffff';
+            e.currentTarget.style.backgroundColor = useVscodeDark ? vscodeDark.hover : (darkMode ? '#1e293b' : '#ffffff');
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
@@ -173,9 +177,9 @@ const SimplifiedTreeView = ({
           style={{
             padding: '4px 8px',
             backgroundColor: 'transparent',
-            border: `1px solid ${darkMode ? '#475569' : '#cbd5e1'}`,
+            border: `1px solid ${useVscodeDark ? vscodeDark.border : (darkMode ? '#475569' : '#cbd5e1')}`,
             borderRadius: '4px',
-            color: darkMode ? '#e2e8f0' : '#475569',
+            color: useVscodeDark ? vscodeDark.text : (darkMode ? '#e2e8f0' : '#475569'),
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -184,7 +188,7 @@ const SimplifiedTreeView = ({
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = darkMode ? '#1e293b' : '#ffffff';
+            e.currentTarget.style.backgroundColor = useVscodeDark ? vscodeDark.hover : (darkMode ? '#1e293b' : '#ffffff');
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
@@ -197,7 +201,7 @@ const SimplifiedTreeView = ({
           <span style={{
             marginLeft: 'auto',
             fontSize: '12px',
-            color: darkMode ? '#94a3b8' : '#64748b'
+            color: useVscodeDark ? vscodeDark.muted : (darkMode ? '#94a3b8' : '#64748b')
           }}>
             {searchResults.length} matches found
           </span>

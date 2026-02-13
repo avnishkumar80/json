@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Copy, Check } from 'lucide-react';
+import { vscodeDark } from '../../utils/vscodeTheme';
 
 const JsonEditor = ({
   jsonInput,
   error,
   darkMode,
+  useVscodeTheme,
   copied,
   textareaRef, // This ref will now point to nothing or we can try to expose something similar if needed, but for now it's likely unused by parent in a way that breaks things immediately except for focus
   onInputChange,
@@ -14,6 +16,7 @@ const JsonEditor = ({
   currentSearchIndex = -1,
   onCursorChange
 }) => {
+  const useVscodeDark = darkMode && useVscodeTheme;
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const decorationsCollectionRef = useRef(null);
@@ -111,9 +114,9 @@ const JsonEditor = ({
       position: 'relative',
       minHeight: 0,
       height: '100%',
-      backgroundColor: darkMode ? '#111827' : '#ffffff',
+      backgroundColor: useVscodeDark ? vscodeDark.bg : (darkMode ? '#111827' : '#ffffff'),
       borderRadius: '8px',
-      border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+      border: `1px solid ${useVscodeDark ? vscodeDark.border : (darkMode ? '#374151' : '#e5e7eb')}`,
       overflow: 'hidden' // Ensure editor doesn't overflow
     }}>
       {/* Inject Styles for Highlights */}
@@ -134,11 +137,11 @@ const JsonEditor = ({
       {/* Error Display */}
       {error && (
         <div style={{
-          backgroundColor: darkMode ? '#7f1d1d' : '#fef2f2',
+          backgroundColor: darkMode ? '#3f1d1d' : '#fef2f2',
           color: darkMode ? '#fca5a5' : '#dc2626',
           padding: '12px 16px',
           fontSize: '14px',
-          borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+          borderBottom: `1px solid ${useVscodeDark ? vscodeDark.border : (darkMode ? '#374151' : '#e5e7eb')}`,
           flexShrink: 0
         }}>
           {error}
@@ -183,8 +186,8 @@ const JsonEditor = ({
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
-              backgroundColor: copied ? '#10b981' : (darkMode ? '#374151' : '#f3f4f6'),
-              color: copied ? 'white' : (darkMode ? '#d1d5db' : '#374151'),
+              backgroundColor: copied ? '#10b981' : (useVscodeDark ? vscodeDark.panel : (darkMode ? '#374151' : '#f3f4f6')),
+              color: copied ? 'white' : (useVscodeDark ? vscodeDark.text : (darkMode ? '#d1d5db' : '#374151')),
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',

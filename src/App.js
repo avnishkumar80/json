@@ -23,7 +23,7 @@ import { useSchemaValidation } from './hooks/useSchemaValidation';
 import { validateJson, formatJson, minifyJson } from './utils/jsonUtils';
 import { analyzeJsonErrors, applySingleFix, applyAllFixes } from './utils/jsonAutoFix';
 import { trackEvent } from './utils/analytics';
-import { VIEW_MODES, DEFAULT_SETTINGS, SAMPLE_JSON } from './constants';
+import { VIEW_MODES, DEFAULT_SETTINGS, SAMPLE_JSON, STORAGE_KEYS } from './constants';
 
 const JsonFormatter = () => {
   // State management
@@ -42,6 +42,7 @@ const JsonFormatter = () => {
   const [cursorPosition, setCursorPosition] = useState({ line: 1, col: 1 });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedGraphPath, setSelectedGraphPath] = useState(null);
+  const [useVscodeTheme, setUseVscodeTheme] = useState(false);
   // Refs
   const textareaRef = useRef(null);
 
@@ -49,6 +50,17 @@ const JsonFormatter = () => {
   const { darkMode, toggleTheme } = useTheme();
   const { hasUnsavedChanges, setHasUnsavedChanges, setLastSavedContent, checkUnsavedChanges } = useUnsavedChanges();
   const { expandedNodes, toggleNode } = useTreeView();
+
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.VSCODE_THEME);
+    if (savedTheme !== null) {
+      setUseVscodeTheme(savedTheme === 'true');
+    }
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.VSCODE_THEME, String(useVscodeTheme));
+  }, [useVscodeTheme]);
 
   const {
     schema,
@@ -460,6 +472,7 @@ const JsonFormatter = () => {
               jsonInput={jsonInput}
               error={error}
               darkMode={darkMode}
+              useVscodeTheme={useVscodeTheme}
               copied={copied}
               textareaRef={textareaRef}
               onInputChange={handleInputChange}
@@ -473,6 +486,7 @@ const JsonFormatter = () => {
               jsonInput={jsonInput}
               error={error}
               darkMode={darkMode}
+              useVscodeTheme={useVscodeTheme}
               copied={copied}
               expandedNodes={expandedNodes}
               onToggleNode={toggleNode}
@@ -501,6 +515,7 @@ const JsonFormatter = () => {
                     jsonInput={jsonInput}
                     error={error}
                     darkMode={darkMode}
+                    useVscodeTheme={useVscodeTheme}
                     copied={copied}
                     expandedNodes={expandedNodes}
                     onToggleNode={toggleNode}
@@ -520,6 +535,7 @@ const JsonFormatter = () => {
                 <GraphVisualizer
                   jsonInput={jsonInput}
                   darkMode={darkMode}
+                  useVscodeTheme={useVscodeTheme}
                   isSidebarOpen={isSidebarOpen}
                   onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                   selectedPath={selectedGraphPath}
@@ -554,6 +570,8 @@ const JsonFormatter = () => {
         showSettings={showSettings}
         onClose={() => setShowSettings(false)}
         darkMode={darkMode}
+        useVscodeTheme={useVscodeTheme}
+        onToggleVscodeTheme={() => setUseVscodeTheme((prev) => !prev)}
         indentSize={indentSize}
         setIndentSize={setIndentSize}
         loadSample={loadSample}
