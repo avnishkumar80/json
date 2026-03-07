@@ -23,6 +23,7 @@ import { useSchemaValidation } from './hooks/useSchemaValidation';
 import { validateJson, formatJson, minifyJson } from './utils/jsonUtils';
 import { analyzeJsonErrors, applySingleFix, applyAllFixes } from './utils/jsonAutoFix';
 import { trackEvent } from './utils/analytics';
+import { generateEmptyGuid, generateRandomGuid } from './utils/guidUtils';
 import { VIEW_MODES, DEFAULT_SETTINGS, SAMPLE_JSON, STORAGE_KEYS } from './constants';
 
 const JsonFormatter = () => {
@@ -35,6 +36,7 @@ const JsonFormatter = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [guidCopiedType, setGuidCopiedType] = useState(null); // 'empty' or 'random'
   const [autoFixSuggestions, setAutoFixSuggestions] = useState([]);
   const [showAutoFix, setShowAutoFix] = useState(false);
   const [showSchemaModal, setShowSchemaModal] = useState(false);
@@ -206,6 +208,30 @@ const JsonFormatter = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       trackEvent('copy_json');
+    }
+  };
+
+  const handleCopyEmptyGuid = async () => {
+    try {
+      const guid = generateEmptyGuid();
+      await navigator.clipboard.writeText(guid);
+      setGuidCopiedType('empty');
+      setTimeout(() => setGuidCopiedType(null), 2000);
+      trackEvent('copy_empty_guid');
+    } catch (e) {
+      console.error('Failed to copy empty GUID', e);
+    }
+  };
+
+  const handleCopyRandomGuid = async () => {
+    try {
+      const guid = generateRandomGuid();
+      await navigator.clipboard.writeText(guid);
+      setGuidCopiedType('random');
+      setTimeout(() => setGuidCopiedType(null), 2000);
+      trackEvent('copy_random_guid');
+    } catch (e) {
+      console.error('Failed to copy random GUID', e);
     }
   };
 
@@ -466,6 +492,9 @@ const JsonFormatter = () => {
               }}
               onLoadSample={loadSample}
               onOpenFile={openFile}
+              onCopyEmptyGuid={handleCopyEmptyGuid}
+              onCopyRandomGuid={handleCopyRandomGuid}
+              guidCopiedType={guidCopiedType}
             />
           ) : viewMode === VIEW_MODES.EDITOR ? (
             <JsonEditor

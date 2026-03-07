@@ -1,11 +1,23 @@
 import React from 'react';
-import { FileText, Clipboard, FolderOpen, FileJson, Upload } from 'lucide-react';
+import {
+    FileText,
+    Clipboard,
+    FolderOpen,
+    FileJson,
+    Upload,
+    Hash,
+    Fingerprint,
+    Check
+} from 'lucide-react';
 
 const EmptyState = ({
     darkMode,
     onPaste,
     onLoadSample,
-    onOpenFile
+    onOpenFile,
+    onCopyEmptyGuid,
+    onCopyRandomGuid,
+    guidCopiedType
 }) => {
     const cardStyle = {
         backgroundColor: darkMode ? '#1f2937' : '#ffffff',
@@ -157,6 +169,76 @@ const EmptyState = ({
                     <div>
                         <h3 style={titleStyle}>Load Sample</h3>
                         <p style={descStyle}>Try with data</p>
+                    </div>
+                </button>
+
+                {/* Empty GUID Action */}
+                <button
+                    onClick={onCopyEmptyGuid}
+                    className="empty-state-card"
+                    style={{
+                        ...cardStyle,
+                        ...(guidCopiedType === 'empty' ? {
+                            borderColor: '#10b981',
+                            backgroundColor: darkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)'
+                        } : {})
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 12px 20px -8px rgba(0, 0, 0, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                    }}
+                >
+                    <div style={{
+                        ...iconContainerStyle,
+                        ...(guidCopiedType === 'empty' ? {
+                            backgroundColor: '#10b981',
+                            color: 'white'
+                        } : {})
+                    }}>
+                        {guidCopiedType === 'empty' ? <Check size={32} /> : <Hash size={32} />}
+                    </div>
+                    <div>
+                        <h3 style={titleStyle}>Empty GUID</h3>
+                        <p style={descStyle}>{guidCopiedType === 'empty' ? 'Copied!' : 'Copy to clipboard'}</p>
+                    </div>
+                </button>
+
+                {/* Random GUID Action */}
+                <button
+                    onClick={onCopyRandomGuid}
+                    className="empty-state-card"
+                    style={{
+                        ...cardStyle,
+                        ...(guidCopiedType === 'random' ? {
+                            borderColor: '#10b981',
+                            backgroundColor: darkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)'
+                        } : {})
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 12px 20px -8px rgba(0, 0, 0, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                    }}
+                >
+                    <div style={{
+                        ...iconContainerStyle,
+                        ...(guidCopiedType === 'random' ? {
+                            backgroundColor: '#10b981',
+                            color: 'white'
+                        } : {})
+                    }}>
+                        {guidCopiedType === 'random' ? <Check size={32} /> : <Fingerprint size={32} />}
+                    </div>
+                    <div>
+                        <h3 style={titleStyle}>Random GUID</h3>
+                        <p style={descStyle}>{guidCopiedType === 'random' ? 'Copied!' : 'Copy to clipboard'}</p>
                     </div>
                 </button>
             </div>
