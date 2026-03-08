@@ -127,16 +127,15 @@ const SimplifiedHeader = ({
             }}
             title="Go Home"
           >
-            <div style={{
-              padding: '8px',
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              borderRadius: '8px',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <FileText size={20} />
-            </div>
+            <img
+              src={`${process.env.PUBLIC_URL}/icon.svg`}
+              alt="GuidedJSON Logo"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '6px'
+              }}
+            />
 
             <div>
               <h1 style={{
