@@ -56,18 +56,34 @@ const SimplifiedHeader = ({
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '15px',
+    fontSize: '14px',
     fontWeight: '600',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
     backgroundColor: isActive
-      ? '#10b981'
-      : (darkMode ? '#374151' : '#f3f4f6'),
-    color: isActive ? '#ffffff' : (darkMode ? '#d1d5db' : '#374151'),
-    transition: 'all 0.15s',
-    boxShadow: isActive ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none'
+      ? (darkMode ? '#374151' : '#ffffff')
+      : 'transparent',
+    color: isActive
+      ? (darkMode ? '#ffffff' : '#111827')
+      : (darkMode ? '#9ca3af' : '#6b7280'),
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: isActive
+      ? (darkMode ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)')
+      : 'none',
+    position: 'relative',
+    zIndex: 1
   });
+
+  const podStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '4px',
+    backgroundColor: darkMode ? 'rgba(55, 65, 81, 0.5)' : 'rgba(243, 244, 246, 0.5)',
+    borderRadius: '12px',
+    border: `1px solid ${darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`
+  };
 
   return (
     <>
@@ -75,13 +91,13 @@ const SimplifiedHeader = ({
         {`
           .header-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            background-color: ${darkMode ? '#4b5563' : '#e5e7eb'} !important;
           }
           .header-btn:active {
             transform: translateY(0);
           }
-          .view-btn:hover {
-            filter: brightness(1.1);
+          .view-btn:hover:not(.active) {
+            color: ${darkMode ? '#e5e7eb' : '#374151'} !important;
           }
           .view-btn.active:hover {
             filter: brightness(0.95);
@@ -98,21 +114,25 @@ const SimplifiedHeader = ({
       </style>
       <header style={{
         position: 'sticky',
-        top: 0,
+        top: '16px',
         zIndex: 100,
-        borderBottom: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
-        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+        margin: '0 24px 16px 24px',
+        borderRadius: '16px',
+        border: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+        backgroundColor: darkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         boxShadow: darkMode
-          ? '0 1px 3px 0 rgba(0, 0, 0, 0.2)'
-          : '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          ? '0 4px 24px -4px rgba(0, 0, 0, 0.5)'
+          : '0 4px 24px -4px rgba(0, 0, 0, 0.1)'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '12px 24px',
-          gap: '20px',
-          flexWrap: 'wrap'
+          padding: '10px 16px',
+          gap: '24px',
+          flexWrap: 'nowrap'
         }}>
           {/* Brand Section */}
           <div
@@ -166,19 +186,20 @@ const SimplifiedHeader = ({
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '16px',
+            gap: '24px',
             flex: 1,
-            justifyContent: 'center'
+            justifyContent: 'center',
+            minWidth: '0' // flex truncate fix
           }}>
-            {/* View Mode Buttons */}
+            {/* View Mode Segmented Control */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '4px',
-              backgroundColor: darkMode ? '#111827' : '#e5e7eb',
-              borderRadius: '10px',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+              gap: '4px',
+              padding: '6px',
+              backgroundColor: darkMode ? 'rgba(17, 24, 39, 0.6)' : 'rgba(243, 244, 246, 0.8)',
+              borderRadius: '12px',
+              border: `1px solid ${darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`
             }}>
               <button
                 onClick={() => switchViewMode('editor')}
@@ -240,12 +261,13 @@ const SimplifiedHeader = ({
             }}>
               <Search
                 size={16}
+                strokeWidth={2.5}
                 style={{
                   position: 'absolute',
-                  left: '12px',
+                  left: '16px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: darkMode ? '#9ca3af' : '#6b7280',
+                  color: darkMode ? '#6b7280' : '#9ca3af',
                   pointerEvents: 'none',
                   zIndex: 10
                 }}
@@ -280,16 +302,39 @@ const SimplifiedHeader = ({
                 autoComplete="off"
                 style={{
                   width: '100%',
-                  padding: '8px 12px 8px 36px',
-                  paddingRight: searchQuery ? '140px' : '12px',
-                  border: `1px solid ${darkMode ? '#4b5563' : '#d1d5db'}`,
-                  borderRadius: '8px',
-                  backgroundColor: darkMode ? '#374151' : '#ffffff',
+                  padding: '10px 16px 10px 42px',
+                  paddingRight: searchQuery ? '140px' : '48px',
+                  border: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                  borderRadius: '999px',
+                  backgroundColor: darkMode ? 'rgba(17, 24, 39, 0.4)' : 'rgba(255, 255, 255, 0.6)',
                   color: darkMode ? '#f3f4f6' : '#111827',
                   fontSize: '14px',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
                 }}
               />
+
+              {/* Keyboard Shortcut Hint (Shows when empty) */}
+              {!searchQuery && (
+                <div style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '2px 6px',
+                  backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  borderRadius: '6px',
+                  color: darkMode ? '#9ca3af' : '#6b7280',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  pointerEvents: 'none',
+                  border: `1px solid ${darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`
+                }}>
+                  <span style={{ fontFamily: 'system-ui' }}>⌘ F</span>
+                </div>
+              )}
 
               {/* Search Results Counter and Navigation */}
               {searchQuery && (
@@ -370,103 +415,101 @@ const SimplifiedHeader = ({
             </div>
           </div>
 
-          {/* Right Actions */}
+          {/* Right Actions - Grouped into Pods */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '12px'
           }}>
-            {/* Icon-only buttons */}
-            <button
-              onClick={openFile}
-              className="header-btn"
-              style={{
-                ...iconButtonStyle,
-                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                color: darkMode ? '#d1d5db' : '#374151'
-              }}
-              title="Open File (Ctrl+O)"
-            >
-              <FolderOpen size={18} />
-            </button>
 
-            <button
-              onClick={saveFile}
-              disabled={!jsonInput.trim()}
-              className="header-btn"
-              style={{
-                ...iconButtonStyle,
-                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                color: hasUnsavedChanges && jsonInput.trim()
-                  ? '#f59e0b'
-                  : (darkMode ? '#d1d5db' : '#374151'),
-                cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
-                opacity: !jsonInput.trim() ? 0.5 : 1
-              }}
-              title={hasUnsavedChanges ? 'Save (Ctrl+S)' : 'Download'}
-            >
-              {hasUnsavedChanges ? <Save size={18} /> : <Download size={18} />}
-            </button>
+            {/* File Operations Pod */}
+            <div style={podStyle}>
+              <button
+                onClick={openFile}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#4b5563'
+                }}
+                title="Open File (Ctrl+O)"
+              >
+                <FolderOpen size={18} />
+              </button>
 
-            <button
-              onClick={clearInput}
-              className="header-btn"
-              style={{
-                ...iconButtonStyle,
-                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                color: darkMode ? '#d1d5db' : '#374151'
-              }}
-              title="Clear All (Ctrl+Shift+C)"
-            >
-              <RotateCcw size={18} />
-            </button>
+              <button
+                onClick={saveFile}
+                disabled={!jsonInput.trim()}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: hasUnsavedChanges && jsonInput.trim()
+                    ? '#f59e0b'
+                    : (darkMode ? '#d1d5db' : '#4b5563'),
+                  cursor: !jsonInput.trim() ? 'not-allowed' : 'pointer',
+                  opacity: !jsonInput.trim() ? 0.5 : 1
+                }}
+                title={hasUnsavedChanges ? 'Save (Ctrl+S)' : 'Download'}
+              >
+                {hasUnsavedChanges ? <Save size={18} /> : <Download size={18} />}
+              </button>
 
-            {/* Divider */}
-            <div style={{
-              width: '1px',
-              height: '24px',
-              backgroundColor: darkMode ? '#374151' : '#d1d5db',
-              margin: '0 4px'
-            }} />
+              <button
+                onClick={clearInput}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#4b5563'
+                }}
+                title="Clear All (Ctrl+Shift+C)"
+              >
+                <RotateCcw size={18} />
+              </button>
+            </div>
 
-            <button
-              onClick={onShowSchemaModal}
-              className="header-btn"
-              style={{
-                ...iconButtonStyle,
-                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                color: isSchemaValid ? (darkMode ? '#d1d5db' : '#374151') : (darkMode ? '#f87171' : '#dc2626')
-              }}
-              title="JSON Schema Validation"
-            >
-              <FileJson size={18} />
-            </button>
+            {/* Application Settings Pod */}
+            <div style={podStyle}>
+              <button
+                onClick={onShowSchemaModal}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: isSchemaValid ? (darkMode ? '#d1d5db' : '#4b5563') : (darkMode ? '#f87171' : '#dc2626')
+                }}
+                title="JSON Schema Validation"
+              >
+                <FileJson size={18} />
+              </button>
 
-            <button
-              onClick={() => setShowSettings(true)}
-              className="header-btn"
-              style={{
-                ...iconButtonStyle,
-                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                color: darkMode ? '#d1d5db' : '#374151'
-              }}
-              title="Settings & More"
-            >
-              <Settings size={18} />
-            </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#4b5563'
+                }}
+                title="Settings & More"
+              >
+                <Settings size={18} />
+              </button>
 
-            <button
-              onClick={toggleTheme}
-              className="header-btn"
-              style={{
-                ...iconButtonStyle,
-                backgroundColor: darkMode ? '#374151' : '#f3f4f6',
-                color: darkMode ? '#d1d5db' : '#374151'
-              }}
-              title={darkMode ? 'Light Mode' : 'Dark Mode'}
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
+              <button
+                onClick={toggleTheme}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#4b5563'
+                }}
+                title={darkMode ? 'Light Mode' : 'Dark Mode'}
+              >
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            </div>
           </div>
         </div>
       </header>
