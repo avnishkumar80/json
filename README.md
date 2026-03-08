@@ -1,76 +1,66 @@
-# Getting Started with Create React App
+# GuidedJSON 🚀
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**GuidedJSON** is a fast, comprehensive, and beautiful JSON formatting, validation, and conversion suite designed specifically for modern web developers.
 
-## Available Scripts
+![JSON Formatter UI](https://guidedjson.com/og-image.png)
 
-In the project directory, you can run:
+## What GuidedJSON Solves
 
-### `npm start`
+Working with large JSON payloads can be frustrating when tools lack advanced features, are too slow, or bombard you with ads. GuidedJSON brings the power of an IDE directly into your browser:
+- **Instant JSON Validation & Formatting:** Quickly detect missing commas or mismatched brackets.
+- **Data Transformation:** Generate accurate JSON Schemas (Draft-07), TypeScript Types, and interactive React Forms from a single payload.
+- **API Payload Building:** Prototype the exact shape of your RESTful API data structures with confidence.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Features & Workflows
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 1. JSON Validator and Formatter
+GuidedJSON features an intelligent editor powered by `monaco-editor`. It provides syntax highlighting, folding, error linting, and 1-click auto-fixes.
 
-### `npm test`
+### 2. JSON to TypeScript Generation
+Paste a convoluted API response and instantly generate strict, nested TypeScript Interfaces for your front-end applications. Say goodbye to manual `interface` definitions.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 3. JSON Schema Generator
+Writing JSON Schema by hand is tedious and error-prone. Paste an example object into GuidedJSON, and it will emit a compliant `draft-07` or `2020-12` schema defining properties, required fields, and primitive types.
 
-### `npm run build`
+### 4. Search and Graph Visualization
+Easily search through massive JSON files (up to tens of thousands of lines) and view data represented visually as a DAG (Directed Acyclic Graph).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Project Structure & Architecture
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+This project is a React Single Page Application setup using Create React App (CRA). It uses programmatic SEO routes to serve specific metadata and content depending on the tool URL.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- **Routing:** Handled via `react-router-dom` using `Suspense` and `lazy()` loading to split bundles.
+- **SEO & Meta Tags:** Handled via `react-helmet-async`.
+- **Sitemap Automation:** Run `npm run build` to execute the Node.js script located at `scripts/generate-sitemap.js`, which dynamically generates an up-to-date `public/sitemap.xml`.
 
-### `npm run eject`
+## Getting Started
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Prerequisites
+- Node.js (v18+)
+- npm or yarn
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Installation
+1. Clone the repository: `git clone git@github.com:your-repo/guidedjson.git`
+2. Install dependencies: `npm install`
+3. Start the dev server: `npm start`
+4. Visit `http://localhost:3000`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Building for Production
+To bundle a highly optimized production build along with an automatically updated sitemap:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+npm run build
+```
 
-# JSON Formatter & Validator
+This ensures the sitemap correctly logs all programmatic SEO routes such as `/json-validator`, `/json-to-typescript`, and `/blog` before minification.
 
-A modern, feature-rich JSON formatter and validator built with React.
+## SEO Optimization
 
-> **Documentation**: Detailed documentation for features, architecture, and guides can be found in the [`docs/`](./docs/) directory.
+GuidedJSON is highly optimized for search engines aiming for "JSON Tools for Developers":
+- Fast static builds.
+- Dynamic route-based `<Helmet>` updates for Title, Descriptions, and OpenGraph variables.
+- Structured Data injecting `SoftwareApplication` / `WebApplication` and `FAQPage` metadata.
+- Pre-configured `robots.txt` explicitly allowing indexers and directing to the `sitemap.xml`.
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+*Built with React, Monaco, and ❤️ for developers.*
