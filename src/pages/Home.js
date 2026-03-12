@@ -33,43 +33,44 @@ const Home = () => {
                         <CoreEditor fullHeight={true} />
                     </main>
                 </div>
+                {/* Visually hidden Developer SEO Content Section to prevent scrolling while keeping DOM structure for crawlers */}
+                <div style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+                    <section id="about" style={{ padding: '80px 32px', maxWidth: '1000px', margin: '0 auto' }}>
+                        <h2 style={{ fontSize: '2.5rem', marginBottom: '32px', textAlign: 'center' }}>What is GuidedJSON?</h2>
+                        <p style={{ fontSize: '1.2rem', lineHeight: '1.8', textAlign: 'center', marginBottom: '64px', color: darkMode ? '#cbd5e1' : '#475569' }}>
+                            GuidedJSON is a powerful suite of professional developer tools designed to format, validate, and convert JSON structures directly in your browser securely and instantly.
+                        </p>
 
-                {/* Developer SEO Content Section */}
-                <section id="about" style={{ padding: '80px 32px', maxWidth: '1000px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '2.5rem', marginBottom: '32px', textAlign: 'center' }}>What is GuidedJSON?</h2>
-                    <p style={{ fontSize: '1.2rem', lineHeight: '1.8', textAlign: 'center', marginBottom: '64px', color: darkMode ? '#cbd5e1' : '#475569' }}>
-                        GuidedJSON is a powerful suite of professional developer tools designed to format, validate, and convert JSON structures directly in your browser securely and instantly.
-                    </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+                            <div style={{ padding: '32px', backgroundColor: darkMode ? '#1e293b' : '#ffffff', borderRadius: '8px', border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
+                                <h3 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Why Developers Use It</h3>
+                                <p style={{ color: darkMode ? '#cbd5e1' : '#475569', lineHeight: '1.6' }}>
+                                    Stop relying on bloated desktop apps or ad-heavy websites. GuidedJSON offers a clean, lightning-fast React-based editor inspired by VS Code, equipped with dark mode, monaco-editor, tree-view graphs, and automated syntax fixers.
+                                </p>
+                            </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-                        <div style={{ padding: '32px', backgroundColor: darkMode ? '#1e293b' : '#ffffff', borderRadius: '8px', border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
-                            <h3 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Why Developers Use It</h3>
-                            <p style={{ color: darkMode ? '#cbd5e1' : '#475569', lineHeight: '1.6' }}>
-                                Stop relying on bloated desktop apps or ad-heavy websites. GuidedJSON offers a clean, lightning-fast React-based editor inspired by VS Code, equipped with dark mode, monaco-editor, tree-view graphs, and automated syntax fixers.
-                            </p>
+                            <div style={{ padding: '32px', backgroundColor: darkMode ? '#1e293b' : '#ffffff', borderRadius: '8px', border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
+                                <h3 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Example Use Cases</h3>
+                                <ul style={{ paddingLeft: '20px', color: darkMode ? '#cbd5e1' : '#475569', lineHeight: '1.8' }}>
+                                    <li><Link to="/json-to-schema" style={{ color: '#3b82f6' }}>Convert JSON to Schema reference</Link></li>
+                                    <li><Link to="/json-to-typescript" style={{ color: '#3b82f6' }}>Generate TypeScript interfaces instantly</Link></li>
+                                    <li><Link to="/json-to-api" style={{ color: '#3b82f6' }}>Build API payload structures securely</Link></li>
+                                    <li><Link to="/json-validator" style={{ color: '#3b82f6' }}>Validate and format standard JSON code</Link></li>
+                                </ul>
+                            </div>
                         </div>
+                    </section>
 
-                        <div style={{ padding: '32px', backgroundColor: darkMode ? '#1e293b' : '#ffffff', borderRadius: '8px', border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>
-                            <h3 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Example Use Cases</h3>
-                            <ul style={{ paddingLeft: '20px', color: darkMode ? '#cbd5e1' : '#475569', lineHeight: '1.8' }}>
-                                <li><Link to="/json-to-schema" style={{ color: '#3b82f6' }}>Convert JSON to Schema reference</Link></li>
-                                <li><Link to="/json-to-typescript" style={{ color: '#3b82f6' }}>Generate TypeScript interfaces instantly</Link></li>
-                                <li><Link to="/json-to-api" style={{ color: '#3b82f6' }}>Build API payload structures securely</Link></li>
-                                <li><Link to="/json-validator" style={{ color: '#3b82f6' }}>Validate and format standard JSON code</Link></li>
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-
-                <footer style={{
-                    padding: '32px',
-                    borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
-                    textAlign: 'center',
-                    color: darkMode ? '#94a3b8' : '#64748b',
-                    backgroundColor: darkMode ? '#1e293b' : '#ffffff'
-                }}>
-                    <p>&copy; {new Date().getFullYear()} GuidedJSON. All rights reserved.</p>
-                </footer>
+                    <footer style={{
+                        padding: '32px',
+                        borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+                        textAlign: 'center',
+                        color: darkMode ? '#94a3b8' : '#64748b',
+                        backgroundColor: darkMode ? '#1e293b' : '#ffffff'
+                    }}>
+                        <p>&copy; {new Date().getFullYear()} GuidedJSON. All rights reserved.</p>
+                    </footer>
+                </div>
             </div>
         </>
     );

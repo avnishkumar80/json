@@ -71,24 +71,26 @@ const ToolPage = () => {
                 <CoreEditor fullHeight={false} initialMode={formattedSlug} />
             </section>
 
-            {/* SEO Content Section Below Tool */}
+            {/* Visually hidden SEO Content Section Below Tool to prevent scrolling while keeping DOM structure for crawlers */}
             {content.faq && content.faq.length > 0 && (
-                <section style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '64px' }}>
-                    <h2 style={{ fontSize: '1.8rem', marginBottom: '24px' }}>Frequently Asked Questions</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        {content.faq.map((item, index) => (
-                            <div key={index} style={{
-                                backgroundColor: darkMode ? '#1e293b' : '#ffffff',
-                                padding: '24px',
-                                borderRadius: '8px',
-                                border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`
-                            }}>
-                                <h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: '600' }}>{item.q}</h3>
-                                <p style={{ color: darkMode ? '#cbd5e1' : '#475569', lineHeight: '1.6' }}>{item.a}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                <div style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+                    <section style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '64px' }}>
+                        <h2 style={{ fontSize: '1.8rem', marginBottom: '24px' }}>Frequently Asked Questions</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            {content.faq.map((item, index) => (
+                                <div key={index} style={{
+                                    backgroundColor: darkMode ? '#1e293b' : '#ffffff',
+                                    padding: '24px',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`
+                                }}>
+                                    <h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: '600' }}>{item.q}</h3>
+                                    <p style={{ color: darkMode ? '#cbd5e1' : '#475569', lineHeight: '1.6' }}>{item.a}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </div>
             )}
         </div>
     );
