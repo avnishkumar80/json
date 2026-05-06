@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   Sun,
@@ -12,7 +13,9 @@ import {
   RotateCcw,
   GitCompare,
   FileJson,
-  Network
+  Network,
+  PenTool,
+  BookOpen
 } from 'lucide-react';
 
 const SimplifiedHeader = ({
@@ -38,6 +41,7 @@ const SimplifiedHeader = ({
   isSchemaValid,
   onGoHome
 }) => {
+  const navigate = useNavigate();
   const isJsonValid = jsonInput.trim() && !error;
 
   const iconButtonStyle = {
@@ -482,6 +486,32 @@ const SimplifiedHeader = ({
                 title="JSON Schema Validation"
               >
                 <FileJson size={18} />
+              </button>
+
+              <button
+                onClick={() => navigate('/mermaid-editor')}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#4b5563'
+                }}
+                title="Mermaid Live Editor"
+              >
+                <PenTool size={18} />
+              </button>
+
+              <button
+                onClick={() => navigate('/markdown-editor')}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#4b5563'
+                }}
+                title="Markdown Studio"
+              >
+                <BookOpen size={18} />
               </button>
 
               <button

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   JsonEditor,
   TreeView,
@@ -50,8 +51,27 @@ const CoreEditor = ({ fullHeight = true, initialMode }) => {
 
   // Custom hooks
   const { darkMode, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const { hasUnsavedChanges, setHasUnsavedChanges, setLastSavedContent, checkUnsavedChanges } = useUnsavedChanges();
   const { expandedNodes, toggleNode } = useTreeView();
+
+  // Detect if pasted/dropped text is likely Markdown (not JSON)
+  const looksLikeMarkdown = (text) => {
+    if (!text || !text.trim()) return false;
+    try { JSON.parse(text); return false; } catch {}
+    const patterns = [
+      /^#{1,6}\s/m,           // headings
+      /\*\*[^*]+\*\*/,        // bold
+      /^```/m,                // fenced code block
+      /^[-*+]\s/m,            // unordered list
+      /^\d+\.\s/m,            // ordered list
+      /^>\s/m,                // blockquote
+      /^---$/m,               // horizontal rule
+      /\[[^\]]+\]\([^)]+\)/,  // link
+      /^\|.+\|/m,             // table
+    ];
+    return patterns.filter(p => p.test(text)).length >= 2;
+  };
 
   React.useEffect(() => {
     const savedTheme = localStorage.getItem(STORAGE_KEYS.VSCODE_THEME);
@@ -343,21 +363,38 @@ const CoreEditor = ({ fullHeight = true, initialMode }) => {
     setIsDragging(false);
 
     const file = e.dataTransfer.files[0];
-    if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
+    if (!file) return;
+
+    // .md / .markdown files → route to Markdown Studio
+    const isMd = file.name.endsWith('.md') || file.name.endsWith('.markdown') ||
+                 file.type === 'text/markdown';
+    if (isMd) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        localStorage.setItem('markdownContent', event.target.result);
+        localStorage.setItem('markdownFileName', file.name);
+        trackEvent('md_file_dropped');
+        navigate('/markdown-editor');
+      };
+      reader.readAsText(file);
+      return;
+    }
+
+    // .json files → open in JSON editor as before
+    if (file.type === 'application/json' || file.name.endsWith('.json')) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const content = event.target.result;
         setJsonInput(content);
         setCurrentFileName(file.name);
         checkUnsavedChanges(content);
-        // Validate immediately
         const validation = validateJson(content);
         setError(validation.error);
         trackEvent('file_dropped');
       };
       reader.readAsText(file);
     }
-  }, [checkUnsavedChanges, setCurrentFileName]);
+  }, [checkUnsavedChanges, setCurrentFileName, navigate]);
 
 
 
@@ -407,7 +444,8 @@ const CoreEditor = ({ fullHeight = true, initialMode }) => {
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
             </div>
-            <h2 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>Drop JSON file here</h2>
+            <h2 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>Drop a file to open it</h2>
+            <p style={{ fontSize: '14px', margin: '8px 0 0', opacity: 0.75 }}>.json → JSON Editor &nbsp;·&nbsp; .md → Markdown Studio</p>
           </div>
         </div>
       )}
@@ -480,14 +518,21 @@ const CoreEditor = ({ fullHeight = true, initialMode }) => {
               onPaste={async () => {
                 try {
                   const text = await navigator.clipboard.readText();
-                  if (text) {
-                    setJsonInput(text);
-                    checkUnsavedChanges(text);
-                    // Validate
-                    const validation = validateJson(text);
-                    setError(validation.error);
-                    trackEvent('pasted_from_empty_state');
+                  if (!text) return;
+                  // If pasted content looks like Markdown, open in Markdown Studio
+                  if (looksLikeMarkdown(text)) {
+                    localStorage.setItem('markdownContent', text);
+                    localStorage.removeItem('markdownFileName');
+                    trackEvent('md_pasted_from_empty_state');
+                    navigate('/markdown-editor');
+                    return;
                   }
+                  // Otherwise treat as JSON
+                  setJsonInput(text);
+                  checkUnsavedChanges(text);
+                  const validation = validateJson(text);
+                  setError(validation.error);
+                  trackEvent('pasted_from_empty_state');
                 } catch (e) {
                   console.error('Failed to read clipboard:', e);
                 }

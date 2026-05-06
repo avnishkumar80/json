@@ -56,6 +56,8 @@ const Home = () => {
                                     <li><Link to="/json-to-typescript" style={{ color: '#3b82f6' }}>Generate TypeScript interfaces instantly</Link></li>
                                     <li><Link to="/json-to-api" style={{ color: '#3b82f6' }}>Build API payload structures securely</Link></li>
                                     <li><Link to="/json-validator" style={{ color: '#3b82f6' }}>Validate and format standard JSON code</Link></li>
+                                    <li><Link to="/mermaid-editor" style={{ color: '#3b82f6' }}>Design Mermaid diagrams visually</Link></li>
+                                    <li><Link to="/markdown-editor" style={{ color: '#3b82f6' }}>Write and preview Markdown live</Link></li>
                                 </ul>
                             </div>
                         </div>

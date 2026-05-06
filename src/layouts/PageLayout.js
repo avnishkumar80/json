@@ -29,10 +29,11 @@ const PageLayout = ({ children }) => {
                 marginTop: 'auto'
             }}>
                 <p>&copy; {new Date().getFullYear()} GuidedJSON. All rights reserved.</p>
-                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
                     <Link to="/json-validator" style={{ color: 'inherit', textDecoration: 'none' }}>JSON Validator</Link>
                     <Link to="/json-formatter" style={{ color: 'inherit', textDecoration: 'none' }}>JSON Formatter</Link>
                     <Link to="/json-to-schema" style={{ color: 'inherit', textDecoration: 'none' }}>JSON Schema Generator</Link>
+                    <Link to="/mermaid-editor" style={{ color: 'inherit', textDecoration: 'none' }}>Mermaid Editor</Link>
                 </div>
             </footer>
         </div>
