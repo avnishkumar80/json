@@ -11,6 +11,7 @@ const BlogPost = lazy(() => import('./pages/BlogPost'));
 const CoreEditor = lazy(() => import('./components/CoreEditor/CoreEditor'));
 const MermaidEditorPage = lazy(() => import('./pages/MermaidEditorPage'));
 const MarkdownEditorPage = lazy(() => import('./pages/MarkdownEditorPage'));
+const JwtDebuggerPage = lazy(() => import('./pages/JwtDebuggerPage'));
 
 function App() {
     return (
@@ -30,6 +31,7 @@ function App() {
                 {/* Specific tools */}
                 <Route path="/mermaid-editor" element={<MermaidEditorPage />} />
                 <Route path="/markdown-editor" element={<MarkdownEditorPage />} />
+                <Route path="/jwt-debugger" element={<JwtDebuggerPage />} />
 
                 {/* Fallback to full screen editor for legacy / editor routes */}
                 <Route path="/editor" element={<CoreEditor fullHeight={true} />} />

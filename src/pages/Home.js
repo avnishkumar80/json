@@ -58,6 +58,7 @@ const Home = () => {
                                     <li><Link to="/json-validator" style={{ color: '#3b82f6' }}>Validate and format standard JSON code</Link></li>
                                     <li><Link to="/mermaid-editor" style={{ color: '#3b82f6' }}>Design Mermaid diagrams visually</Link></li>
                                     <li><Link to="/markdown-editor" style={{ color: '#3b82f6' }}>Write and preview Markdown live</Link></li>
+                                    <li><Link to="/jwt-debugger" style={{ color: '#3b82f6' }}>Decode and debug JSON Web Tokens</Link></li>
                                 </ul>
                             </div>
                         </div>

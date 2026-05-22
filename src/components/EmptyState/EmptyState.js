@@ -9,7 +9,8 @@ import {
     Hash,
     Fingerprint,
     Check,
-    BookOpen
+    BookOpen,
+    Key
 } from 'lucide-react';
 
 const EmptyState = ({
@@ -275,6 +276,39 @@ const EmptyState = ({
                     <div>
                         <h3 style={titleStyle}>Markdown Studio</h3>
                         <p style={descStyle}>Write &amp; preview MD</p>
+                    </div>
+                </button>
+
+                {/* JWT Debugger */}
+                <button
+                    onClick={() => navigate('/jwt-debugger')}
+                    className="empty-state-card"
+                    style={{
+                        ...cardStyle,
+                        borderColor: darkMode ? 'rgba(236,72,153,0.3)' : 'rgba(236,72,153,0.2)',
+                        background: darkMode
+                            ? 'linear-gradient(135deg, rgba(236,72,153,0.08) 0%, rgba(219,39,119,0.06) 100%)'
+                            : 'linear-gradient(135deg, rgba(236,72,153,0.04) 0%, rgba(219,39,119,0.03) 100%)'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 12px 20px -8px rgba(236,72,153,0.25)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                    }}
+                >
+                    <div style={{
+                        ...iconContainerStyle,
+                        backgroundColor: darkMode ? 'rgba(236,72,153,0.15)' : 'rgba(236,72,153,0.1)',
+                        color: '#ec4899'
+                    }}>
+                        <Key size={32} />
+                    </div>
+                    <div>
+                        <h3 style={titleStyle}>JWT Debugger</h3>
+                        <p style={descStyle}>Decode & verify tokens</p>
                     </div>
                 </button>
             </div>

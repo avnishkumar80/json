@@ -15,7 +15,8 @@ import {
   FileJson,
   Network,
   PenTool,
-  BookOpen
+  BookOpen,
+  Key
 } from 'lucide-react';
 
 const SimplifiedHeader = ({
@@ -512,6 +513,19 @@ const SimplifiedHeader = ({
                 title="Markdown Studio"
               >
                 <BookOpen size={18} />
+              </button>
+
+              <button
+                onClick={() => navigate('/jwt-debugger')}
+                className="header-btn"
+                style={{
+                  ...iconButtonStyle,
+                  backgroundColor: 'transparent',
+                  color: darkMode ? '#d1d5db' : '#4b5563'
+                }}
+                title="JWT Debugger"
+              >
+                <Key size={18} />
               </button>
 
               <button
