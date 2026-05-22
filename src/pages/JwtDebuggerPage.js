@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import * as jose from 'jose';
@@ -79,7 +79,7 @@ const JwtDebuggerPage = () => {
         localStorage.setItem('jwtSecret', secret);
     }, [secret]);
 
-    const verifySignature = async () => {
+    const verifySignature = useCallback(async () => {
         if (!token || !header || !secret) {
             setIsValid(null);
             return;
@@ -93,7 +93,7 @@ const JwtDebuggerPage = () => {
         } catch (e) {
             setIsValid(false);
         }
-    };
+    }, [token, header, secret]);
 
     // Auto verify when secret or token changes
     useEffect(() => {
@@ -102,7 +102,7 @@ const JwtDebuggerPage = () => {
         } else {
             setIsValid(null);
         }
-    }, [token, secret, header]);
+    }, [token, secret, header, verifySignature]);
 
 
     const handleTokenChange = (val) => {
